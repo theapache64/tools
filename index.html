@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools</title>
+    <style>
+        :root {
+            --primary-color: #ff3e3e;
+            --secondary-color: #333333;
+            --accent-color: #4361ee;
+            --background-color: #f1f1f1;
+            --card-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 0.9);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--background-color);
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 3px solid black;
+            box-shadow: var(--card-shadow);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            max-width: 600px;
+        }
+
+        .tools-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .tool-card {
+            background-color: white;
+            border: 3px solid black;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 0.9);
+        }
+
+        .tool-card::before {
+            content: "";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--accent-color);
+            z-index: 1;
+        }
+
+        .tool-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .tool-card p {
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .tool-card .date {
+            font-size: 0.8rem;
+            color: #777;
+            margin-bottom: 15px;
+        }
+
+        .tool-link {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border: 2px solid black;
+            box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.9);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .tool-link:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 0.9);
+        }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            padding: 20px;
+            border-top: 3px solid black;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .tools-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TOOLS</h1>
+        <p>A collection of single-page HTML tools</p>
+    </header>
+
+    <div class="tools-container">
+        <!-- Tool Card Template -->
+        <div class="tool-card">
+            <h2>OpenAI Vision Cost Calculator</h2>
+            <div class="date">Added: April 2, 2025</div>
+            <p>Find how much each image is going to cost you and how many image you can analyse with $1</p>
+            <a href="openai-vision-cost-calculator.html" class="tool-link">Open Tool</a>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>a64.in/tools</p>
+    </footer>
+</body>
+</html>
