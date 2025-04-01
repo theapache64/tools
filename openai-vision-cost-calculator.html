@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenAI Vision Cost Calculator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+  <style>
+    /* Neo Brutalist Design System */
+    :root {
+      --background: #ffffff;
+      --foreground: #000000;
+      --primary: #ff3e41;
+      --secondary: #3633ff;
+      --accent: #ffde59;
+      --neutral: #e0e0e0;
+      --border-width: 3px;
+      --shadow-offset: 6px;
+      --box-shadow: 6px 6px 0 0 #000000;
+      --border-radius: 2px;
+      --font-family: 'Courier New', monospace;
+    }
+
+    .dark {
+      --background: #0f0f0f;
+      --foreground: #ffffff;
+      --primary: #ff5e54;
+      --secondary: #4d4aff;
+      --accent: #ffe066;
+      --neutral: #333333;
+      --box-shadow: 6px 6px 0 0 #ffffff;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-family);
+      padding: 20px;
+    }
+
+    .neo-title {
+      font-weight: 800;
+      font-size: 2.5rem;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      letter-spacing: -1px;
+      border-bottom: var(--border-width) solid var(--foreground);
+      padding-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    .neo-subtitle {
+      font-weight: 800;
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    .neo-card {
+      background-color: var(--background);
+      border: var(--border-width) solid var(--foreground);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      transform: translateZ(0);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .neo-card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+    }
+
+    .neo-input {
+      width: 100%;
+      border: var(--border-width) solid var(--foreground);
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      padding: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .neo-input:focus {
+      outline: none;
+      box-shadow: 4px 4px 0 0 var(--foreground);
+      transform: translate(-2px, -2px);
+    }
+
+    .neo-select {
+      width: 100%;
+      border: var(--border-width) solid var(--foreground);
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      padding: 0.75rem;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      transition: all 0.2s ease;
+    }
+
+    .neo-select:focus {
+      outline: none;
+      box-shadow: 4px 4px 0 0 var(--foreground);
+      transform: translate(-2px, -2px);
+    }
+
+    .neo-button {
+      background-color: var(--primary);
+      color: white;
+      border: var(--border-width) solid var(--foreground);
+      font-family: var(--font-family);
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: var(--box-shadow);
+      transition: all 0.15s ease;
+    }
+
+    .neo-button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+    }
+
+    .neo-button:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 0 var(--foreground);
+    }
+
+    .neo-result {
+      background-color: var(--accent);
+      color: var(--foreground);
+      border: var(--border-width) solid var(--foreground);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .neo-result-value {
+      font-weight: bold;
+      font-size: 1.5rem;
+      margin: 0.5rem 0;
+      border-bottom: var(--border-width) dashed var(--foreground);
+      padding-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    .neo-highlight {
+      background-color: var(--secondary);
+      color: white;
+      border: var(--border-width) solid var(--foreground);
+      margin: 1rem 0;
+      padding: 1rem;
+      box-shadow: var(--box-shadow);
+    }
+
+    .neo-badge {
+      background-color: var(--primary);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      font-weight: bold;
+      display: inline-block;
+      border: 2px solid var(--foreground);
+      transform: rotate(-2deg);
+      margin-left: 0.5rem;
+    }
+
+    .neo-label {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      display: block;
+      text-transform: uppercase;
+    }
+
+    .neo-explanation p {
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .neo-toggle {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 30px;
+    }
+
+    .neo-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .neo-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--neutral);
+      border: var(--border-width) solid var(--foreground);
+      transition: .4s;
+    }
+
+    .neo-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--foreground);
+      transition: .4s;
+    }
+
+    input:checked + .neo-slider {
+      background-color: var(--secondary);
+    }
+
+    input:checked + .neo-slider:before {
+      transform: translateX(30px);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-3xl mx-auto">
+    <h1 class="neo-title">OpenAI Vision Cost Calculator</h1>
+    <p class="mb-6">Calculate token costs for images based on size and detail level.</p>
+
+    <div class="neo-card">
+      <h2 class="neo-subtitle">Image Dimensions</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <label class="neo-label" for="width">Width (pixels)</label>
+          <input class="neo-input" id="width" type="number" min="1" value="1024" />
+        </div>
+        <div>
+          <label class="neo-label" for="height">Height (pixels)</label>
+          <input class="neo-input" id="height" type="number" min="1" value="1024" />
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <label class="neo-label" for="detail-level">Detail Level</label>
+        <select class="neo-select" id="detail-level">
+          <option value="high">High (default)</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      
+      <div class="flex justify-end">
+        <button id="calculate-btn" class="neo-button">Calculate Cost</button>
+      </div>
+    </div>
+
+    <div class="neo-result" id="result-container">
+      <h3 class="neo-subtitle">Token Cost</h3>
+      <div class="neo-result-value" id="token-cost">--</div>
+      <div class="neo-explanation" id="calculation-explanation"></div>
+      
+      <div class="neo-highlight mt-6" id="dollar-calculation">
+        <h3 class="neo-subtitle">Cost Per Dollar</h3>
+        <div class="neo-result-value" id="images-per-dollar" style="color: white; border-color: white;">--</div>
+        <div class="neo-explanation" id="dollar-explanation" style="color: white;"></div>
+      </div>
+    </div>
+
+    <div class="neo-card">
+      <h2 class="neo-subtitle">How It Works <span class="neo-badge">info</span></h2>
+      <div class="neo-explanation">
+        <p><strong>Low Detail Images:</strong> Fixed cost of 85 tokens regardless of size.</p>
+        <p><strong>High Detail Images:</strong> Cost depends on size.</p>
+        <ol class="list-decimal pl-5 space-y-2 mb-4">
+          <li>Scale to fit in a 2048px x 2048px square, maintaining aspect ratio</li>
+          <li>Scale so that the image's shortest side is 768px long</li>
+          <li>Count the number of 512px squares needed to cover the image</li>
+          <li>Each 512px square costs 170 tokens</li>
+          <li>Add 85 tokens to the total</li>
+        </ol>
+        <p><strong>Pricing:</strong> $2.50 per 1 million tokens</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed top-4 right-4 flex items-center" style="z-index: 100;">
+    <label class="neo-toggle mr-2">
+      <input type="checkbox" id="theme-toggle">
+      <span class="neo-slider"></span>
+    </label>
+    <span class="ml-2 font-bold">DARK MODE</span>
+  </div>
+
+  <script>
+    // Calculator Logic
+    document.getElementById('calculate-btn').addEventListener('click', calculateCost);
+    document.getElementById('width').addEventListener('input', validateInput);
+    document.getElementById('height').addEventListener('input', validateInput);
+    
+    // Theme Toggle
+    document.getElementById('theme-toggle').addEventListener('change', toggleTheme);
+    
+    // Pricing constant
+    const PRICE_PER_MILLION_TOKENS = 2.50;
+    
+    function validateInput(e) {
+      // Ensure values are positive
+      if (e.target.value < 1) e.target.value = 1;
+    }
+    
+    function calculateCost() {
+      const width = parseInt(document.getElementById('width').value);
+      const height = parseInt(document.getElementById('height').value);
+      const detailLevel = document.getElementById('detail-level').value;
+      
+      let tokenCost = 0;
+      let explanation = '';
+      
+      if (detailLevel === 'low') {
+        tokenCost = 85;
+        explanation = `
+          <p>Detail level: Low</p>
+          <p>Fixed token cost: 85 tokens</p>
+        `;
+      } else {
+        // Step 1: Scale to fit in 2048px x 2048px square
+        let scaledWidth = width;
+        let scaledHeight = height;
+        
+        if (width > 2048 || height > 2048) {
+          const scaleFactor = Math.min(2048 / width, 2048 / height);
+          scaledWidth = Math.floor(width * scaleFactor);
+          scaledHeight = Math.floor(height * scaleFactor);
+        }
+        
+        explanation = `
+          <p><strong>Step 1:</strong> Scale to fit in 2048px x 2048px square</p>
+          <p>Original: ${width}px × ${height}px</p>
+        `;
+        
+        if (width > 2048 || height > 2048) {
+          explanation += `<p>Scaled: ${scaledWidth}px × ${scaledHeight}px</p>`;
+        } else {
+          explanation += `<p>No scaling needed (within limits)</p>`;
+        }
+        
+        // Step 2: Scale shortest side to 768px
+        const shortestSide = Math.min(scaledWidth, scaledHeight);
+        const scaleFactor = 768 / shortestSide;
+        
+        const finalWidth = Math.floor(scaledWidth * scaleFactor);
+        const finalHeight = Math.floor(scaledHeight * scaleFactor);
+        
+        explanation += `
+          <p><strong>Step 2:</strong> Scale so shortest side is 768px</p>
+          <p>Final dimensions: ${finalWidth}px × ${finalHeight}px</p>
+        `;
+        
+        // Step 3: Count 512px tiles
+        const tilesHorizontal = Math.ceil(finalWidth / 512);
+        const tilesVertical = Math.ceil(finalHeight / 512);
+        const totalTiles = tilesHorizontal * tilesVertical;
+        
+        explanation += `
+          <p><strong>Step 3:</strong> Count number of 512px tiles</p>
+          <p>Horizontal tiles: ${tilesHorizontal}</p>
+          <p>Vertical tiles: ${tilesVertical}</p>
+          <p>Total tiles: ${totalTiles}</p>
+        `;
+        
+        // Calculate cost
+        const tileCost = totalTiles * 170;
+        tokenCost = tileCost + 85;
+        
+        explanation += `
+          <p><strong>Step 4:</strong> Calculate final cost</p>
+          <p>Tile cost: ${totalTiles} tiles × 170 tokens = ${tileCost} tokens</p>
+          <p>Base cost: 85 tokens</p>
+          <p>Total cost: ${tileCost} + 85 = ${tokenCost} tokens</p>
+        `;
+      }
+      
+      document.getElementById('token-cost').textContent = `${tokenCost} tokens`;
+      document.getElementById('calculation-explanation').innerHTML = explanation;
+      
+      // Calculate images per dollar
+      calculateImagesPerDollar(tokenCost);
+    }
+    
+    function calculateImagesPerDollar(tokenCost) {
+      // Calculate how many tokens per dollar
+      const tokensPerDollar = 1000000 / PRICE_PER_MILLION_TOKENS;
+      
+      // Calculate how many images per dollar
+      const imagesPerDollar = tokensPerDollar / tokenCost;
+      
+      // Format to 2 decimal places
+      const formattedImagesPerDollar = imagesPerDollar.toFixed(2);
+      
+      // Calculate cost per image
+      const costPerImage = (tokenCost / 1000000) * PRICE_PER_MILLION_TOKENS;
+      const formattedCostPerImage = costPerImage.toFixed(6);
+      
+      document.getElementById('images-per-dollar').textContent = `${formattedImagesPerDollar} images per $1`;
+      
+      document.getElementById('dollar-explanation').innerHTML = `
+        <p>With a price of $${PRICE_PER_MILLION_TOKENS} per 1M tokens:</p>
+        <p>Cost per image: $${formattedCostPerImage}</p>
+        <p>Tokens per dollar: ${(tokensPerDollar).toLocaleString()} tokens</p>
+        <p>$1 allows you to generate approximately ${formattedImagesPerDollar} images at the specified size and detail level.</p>
+      `;
+    }
+    
+    function toggleTheme(e) {
+      if (e.target.checked) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    
+    // Add animation for buttons
+    const buttons = document.querySelectorAll('.neo-button');
+    buttons.forEach(button => {
+      button.addEventListener('mousedown', () => {
+        button.style.transform = 'translate(2px, 2px)';
+        button.style.boxShadow = '2px 2px 0 0 var(--foreground)';
+      });
+      
+      button.addEventListener('mouseup', () => {
+        button.style.transform = '';
+        button.style.boxShadow = '';
+      });
+      
+      button.addEventListener('mouseleave', () => {
+        button.style.transform = '';
+        button.style.boxShadow = '';
+      });
+    });
+    
+    // Initialize with default calculation
+    calculateCost();
+  </script>
+</body>
+</html>
