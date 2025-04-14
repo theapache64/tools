@@ -227,15 +227,117 @@
     input:checked + .neo-slider:before {
       transform: translateX(30px);
     }
+
+    .model-selector {
+      border-left: var(--border-width) solid var(--foreground);
+      border-right: var(--border-width) solid var(--foreground);
+      margin-bottom: 1rem;
+    }
+
+    .model-option {
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border-top: var(--border-width) solid var(--foreground);
+      display: flex;
+      align-items: center;
+    }
+
+    .model-option:last-child {
+      border-bottom: var(--border-width) solid var(--foreground);
+    }
+
+    .model-option.selected {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .model-option:hover:not(.selected) {
+      background-color: var(--neutral);
+    }
+
+    .model-radio {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      border: var(--border-width) solid var(--foreground);
+      position: relative;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .model-option.selected .model-radio::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .tab-buttons {
+      display: flex;
+      margin-bottom: 1rem;
+    }
+
+    .tab-button {
+      padding: 0.5rem 1rem;
+      background-color: var(--neutral);
+      border: var(--border-width) solid var(--foreground);
+      cursor: pointer;
+      text-transform: uppercase;
+      font-weight: bold;
+      margin-right: 0.5rem;
+      transition: all 0.15s ease;
+    }
+
+    .tab-button.active {
+      background-color: var(--primary);
+      color: white;
+      transform: translateY(-4px);
+      box-shadow: var(--box-shadow);
+    }
   </style>
 </head>
 <body class="min-h-screen">
   <div class="max-w-3xl mx-auto">
     <h1 class="neo-title">OpenAI Vision Cost Calculator</h1>
-    <p class="mb-6">Calculate token costs for images based on size and detail level.</p>
+    <p class="mb-6">Calculate token costs for vision models based on image dimensions.</p>
 
     <div class="neo-card">
-      <h2 class="neo-subtitle">Image Dimensions</h2>
+      <h2 class="neo-subtitle">Select Model <span class="neo-badge">NEW</span></h2>
+      <div class="model-selector">
+        <div class="model-option" data-model="gpt4o" onclick="selectModel(this)">
+          <div class="model-radio"></div>
+          <span>GPT-4o / o-series</span>
+        </div>
+        <div class="model-option" data-model="gpt41" onclick="selectModel(this)">
+          <div class="model-radio"></div>
+          <span>GPT-4.1</span>
+        </div>
+        <div class="model-option" data-model="gpt41mini" onclick="selectModel(this)">
+          <div class="model-radio"></div>
+          <span>GPT-4.1-mini</span>
+        </div>
+        <div class="model-option" data-model="gpt41nano" onclick="selectModel(this)">
+          <div class="model-radio"></div>
+          <span>GPT-4.1-nano</span>
+        </div>
+      </div>
+
+      <div id="detail-level-container">
+        <h2 class="neo-subtitle mt-6">Detail Level</h2>
+        <div class="mb-6">
+          <select class="neo-select" id="detail-level">
+            <option value="high">High (default)</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 class="neo-subtitle mt-6">Image Dimensions</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
           <label class="neo-label" for="width">Width (pixels)</label>
@@ -245,14 +347,6 @@
           <label class="neo-label" for="height">Height (pixels)</label>
           <input class="neo-input" id="height" type="number" min="1" value="1024" />
         </div>
-      </div>
-      
-      <div class="mb-6">
-        <label class="neo-label" for="detail-level">Detail Level</label>
-        <select class="neo-select" id="detail-level">
-          <option value="high">High (default)</option>
-          <option value="low">Low</option>
-        </select>
       </div>
       
       <div class="flex justify-end">
@@ -273,18 +367,50 @@
     </div>
 
     <div class="neo-card">
-      <h2 class="neo-subtitle">How It Works <span class="neo-badge">info</span></h2>
-      <div class="neo-explanation">
-        <p><strong>Low Detail Images:</strong> Fixed cost of 85 tokens regardless of size.</p>
-        <p><strong>High Detail Images:</strong> Cost depends on size.</p>
-        <ol class="list-decimal pl-5 space-y-2 mb-4">
-          <li>Scale to fit in a 2048px x 2048px square, maintaining aspect ratio</li>
-          <li>Scale so that the image's shortest side is 768px long</li>
-          <li>Count the number of 512px squares needed to cover the image</li>
-          <li>Each 512px square costs 170 tokens</li>
-          <li>Add 85 tokens to the total</li>
-        </ol>
-        <p><strong>Pricing:</strong> $2.50 per 1 million tokens</p>
+      <div class="tab-buttons">
+        <div class="tab-button active" data-tab="gpt4o-tab" onclick="switchTab(this)">GPT-4o</div>
+        <div class="tab-button" data-tab="gpt41-tab" onclick="switchTab(this)">GPT-4.1</div>
+      </div>
+
+      <div id="gpt4o-tab" class="tab-content">
+        <h2 class="neo-subtitle">GPT-4o / o-series <span class="neo-badge">info</span></h2>
+        <div class="neo-explanation">
+          <p><strong>Low Detail Images:</strong> Fixed cost of 85 tokens regardless of size.</p>
+          <p><strong>High Detail Images:</strong> Cost depends on size.</p>
+          <ol class="list-decimal pl-5 space-y-2 mb-4">
+            <li>Scale to fit in a 2048px x 2048px square, maintaining aspect ratio</li>
+            <li>Scale so that the image's shortest side is 768px long</li>
+            <li>Count the number of 512px squares needed to cover the image</li>
+            <li>Each 512px square costs 170 tokens</li>
+            <li>Add 85 tokens to the total</li>
+          </ol>
+          <p><strong>Examples:</strong></p>
+          <ul class="list-disc pl-5 space-y-2">
+            <li>1024 x 1024 image (high detail): 765 tokens</li>
+            <li>2048 x 4096 image (high detail): 1105 tokens</li>
+            <li>Any size image (low detail): 85 tokens</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="gpt41-tab" class="tab-content" style="display: none;">
+        <h2 class="neo-subtitle">GPT-4.1 Models <span class="neo-badge">info</span></h2>
+        <div class="neo-explanation">
+          <p><strong>All GPT-4.1 models:</strong> Cost based on 32px x 32px patches.</p>
+          <ol class="list-decimal pl-5 space-y-2 mb-4">
+            <li>Calculate 32px x 32px patches needed to cover the image</li>
+            <li>Cap at 1536 patches maximum (scaling down if needed)</li>
+            <li>For GPT-4.1: 1 token per patch</li>
+            <li>For GPT-4.1-mini: 1.62 tokens per patch</li>
+            <li>For GPT-4.1-nano: 2.46 tokens per patch</li>
+          </ol>
+          <p><strong>Examples:</strong></p>
+          <ul class="list-disc pl-5 space-y-2">
+            <li>1024 x 1024 image: 1024 tokens (GPT-4.1)</li>
+            <li>1800 x 2400 image: 1452 tokens (GPT-4.1)</li>
+            <li>Large images are scaled down to stay under 1536 token cap</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -298,104 +424,247 @@
   </div>
 
   <script>
+    // Global variables
+    let selectedModel = "gpt4o";
+    const models = {
+      gpt4o: {
+        name: "GPT-4o / o-series",
+        pricePerMillionTokens: 5.00,
+        hasDetailLevel: true
+      },
+      gpt41: {
+        name: "GPT-4.1",
+        pricePerMillionTokens: 10.00,
+        multiplier: 1.0,
+        hasDetailLevel: false
+      },
+      gpt41mini: {
+        name: "GPT-4.1-mini",
+        pricePerMillionTokens: 5.00,
+        multiplier: 1.62,
+        hasDetailLevel: false
+      },
+      gpt41nano: {
+        name: "GPT-4.1-nano",
+        pricePerMillionTokens: 2.50,
+        multiplier: 2.46,
+        hasDetailLevel: false
+      }
+    };
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      selectModel(document.querySelector('.model-option[data-model="gpt4o"]'));
+      calculateCost();
+    });
+    
     // Calculator Logic
     document.getElementById('calculate-btn').addEventListener('click', calculateCost);
     document.getElementById('width').addEventListener('input', validateInput);
     document.getElementById('height').addEventListener('input', validateInput);
+    document.getElementById('detail-level').addEventListener('change', calculateCost);
     
     // Theme Toggle
     document.getElementById('theme-toggle').addEventListener('change', toggleTheme);
-    
-    // Pricing constant
-    const PRICE_PER_MILLION_TOKENS = 2.50;
     
     function validateInput(e) {
       // Ensure values are positive
       if (e.target.value < 1) e.target.value = 1;
     }
     
+    function selectModel(element) {
+      // Update UI
+      document.querySelectorAll('.model-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      element.classList.add('selected');
+      
+      // Store selected model
+      selectedModel = element.dataset.model;
+      
+      // Toggle detail level visibility
+      const detailLevelContainer = document.getElementById('detail-level-container');
+      detailLevelContainer.style.display = models[selectedModel].hasDetailLevel ? 'block' : 'none';
+      
+      // Recalculate
+      calculateCost();
+    }
+    
+    function switchTab(element) {
+      // Update UI
+      document.querySelectorAll('.tab-button').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      element.classList.add('active');
+      
+      // Show selected tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+      });
+      document.getElementById(element.dataset.tab).style.display = 'block';
+    }
+    
     function calculateCost() {
       const width = parseInt(document.getElementById('width').value);
       const height = parseInt(document.getElementById('height').value);
       const detailLevel = document.getElementById('detail-level').value;
+      const model = models[selectedModel];
       
       let tokenCost = 0;
       let explanation = '';
       
-      if (detailLevel === 'low') {
-        tokenCost = 85;
-        explanation = `
-          <p>Detail level: Low</p>
-          <p>Fixed token cost: 85 tokens</p>
-        `;
-      } else {
-        // Step 1: Scale to fit in 2048px x 2048px square
-        let scaledWidth = width;
-        let scaledHeight = height;
-        
-        if (width > 2048 || height > 2048) {
-          const scaleFactor = Math.min(2048 / width, 2048 / height);
-          scaledWidth = Math.floor(width * scaleFactor);
-          scaledHeight = Math.floor(height * scaleFactor);
-        }
-        
-        explanation = `
-          <p><strong>Step 1:</strong> Scale to fit in 2048px x 2048px square</p>
-          <p>Original: ${width}px × ${height}px</p>
-        `;
-        
-        if (width > 2048 || height > 2048) {
-          explanation += `<p>Scaled: ${scaledWidth}px × ${scaledHeight}px</p>`;
+      // Calculate based on selected model
+      if (selectedModel === 'gpt4o') {
+        // GPT-4o calculation
+        if (detailLevel === 'low') {
+          tokenCost = 85;
+          explanation = `
+            <p>Model: ${model.name}</p>
+            <p>Detail level: Low</p>
+            <p>Fixed token cost: 85 tokens</p>
+          `;
         } else {
-          explanation += `<p>No scaling needed (within limits)</p>`;
+          // Step 1: Scale to fit in 2048px x 2048px square
+          let scaledWidth = width;
+          let scaledHeight = height;
+          
+          if (width > 2048 || height > 2048) {
+            const scaleFactor = Math.min(2048 / width, 2048 / height);
+            scaledWidth = Math.floor(width * scaleFactor);
+            scaledHeight = Math.floor(height * scaleFactor);
+          }
+          
+          explanation = `
+            <p><strong>Model:</strong> ${model.name}</p>
+            <p><strong>Detail level:</strong> High</p>
+            <p><strong>Step 1:</strong> Scale to fit in 2048px x 2048px square</p>
+            <p>Original: ${width}px × ${height}px</p>
+          `;
+          
+          if (width > 2048 || height > 2048) {
+            explanation += `<p>Scaled: ${scaledWidth}px × ${scaledHeight}px</p>`;
+          } else {
+            explanation += `<p>No scaling needed (within limits)</p>`;
+          }
+          
+          // Step 2: Scale shortest side to 768px
+          const shortestSide = Math.min(scaledWidth, scaledHeight);
+          const scaleFactor = 768 / shortestSide;
+          
+          const finalWidth = Math.floor(scaledWidth * scaleFactor);
+          const finalHeight = Math.floor(scaledHeight * scaleFactor);
+          
+          explanation += `
+            <p><strong>Step 2:</strong> Scale so shortest side is 768px</p>
+            <p>Final dimensions: ${finalWidth}px × ${finalHeight}px</p>
+          `;
+          
+          // Step 3: Count 512px tiles
+          const tilesHorizontal = Math.ceil(finalWidth / 512);
+          const tilesVertical = Math.ceil(finalHeight / 512);
+          const totalTiles = tilesHorizontal * tilesVertical;
+          
+          explanation += `
+            <p><strong>Step 3:</strong> Count number of 512px tiles</p>
+            <p>Horizontal tiles: ${tilesHorizontal}</p>
+            <p>Vertical tiles: ${tilesVertical}</p>
+            <p>Total tiles: ${totalTiles}</p>
+          `;
+          
+          // Calculate cost
+          const tileCost = totalTiles * 170;
+          tokenCost = tileCost + 85;
+          
+          explanation += `
+            <p><strong>Step 4:</strong> Calculate final cost</p>
+            <p>Tile cost: ${totalTiles} tiles × 170 tokens = ${tileCost} tokens</p>
+            <p>Base cost: 85 tokens</p>
+            <p>Total cost: ${tileCost} + 85 = ${tokenCost} tokens</p>
+          `;
         }
-        
-        // Step 2: Scale shortest side to 768px
-        const shortestSide = Math.min(scaledWidth, scaledHeight);
-        const scaleFactor = 768 / shortestSide;
-        
-        const finalWidth = Math.floor(scaledWidth * scaleFactor);
-        const finalHeight = Math.floor(scaledHeight * scaleFactor);
-        
-        explanation += `
-          <p><strong>Step 2:</strong> Scale so shortest side is 768px</p>
-          <p>Final dimensions: ${finalWidth}px × ${finalHeight}px</p>
+      } else {
+        // GPT-4.1 models calculation
+        explanation = `
+          <p><strong>Model:</strong> ${model.name}</p>
+          <p><strong>Step 1:</strong> Calculate patches (32px × 32px)</p>
         `;
         
-        // Step 3: Count 512px tiles
-        const tilesHorizontal = Math.ceil(finalWidth / 512);
-        const tilesVertical = Math.ceil(finalHeight / 512);
-        const totalTiles = tilesHorizontal * tilesVertical;
+        // Calculate patches needed
+        const patchesHorizontal = Math.ceil((width + 32 - 1) / 32);
+        const patchesVertical = Math.ceil((height + 32 - 1) / 32);
+        const totalPatches = patchesHorizontal * patchesVertical;
         
         explanation += `
-          <p><strong>Step 3:</strong> Count number of 512px tiles</p>
-          <p>Horizontal tiles: ${tilesHorizontal}</p>
-          <p>Vertical tiles: ${tilesVertical}</p>
-          <p>Total tiles: ${totalTiles}</p>
+          <p>Horizontal patches: ${patchesHorizontal}</p>
+          <p>Vertical patches: ${patchesVertical}</p>
+          <p>Total patches: ${totalPatches}</p>
         `;
         
-        // Calculate cost
-        const tileCost = totalTiles * 170;
-        tokenCost = tileCost + 85;
-        
-        explanation += `
-          <p><strong>Step 4:</strong> Calculate final cost</p>
-          <p>Tile cost: ${totalTiles} tiles × 170 tokens = ${tileCost} tokens</p>
-          <p>Base cost: 85 tokens</p>
-          <p>Total cost: ${tileCost} + 85 = ${tokenCost} tokens</p>
-        `;
+        // Check if scaling is needed
+        if (totalPatches > 1536) {
+          explanation += `<p><strong>Step 2:</strong> Scale down (exceeds 1536 patch limit)</p>`;
+          
+          // Calculate shrink factor
+          const shrinkFactor = Math.sqrt(1536 * 32 * 32 / (width * height));
+          const scaledWidth = Math.floor(width * shrinkFactor);
+          const scaledHeight = Math.floor(height * shrinkFactor);
+          
+          // Ensure we round down to whole number of patches
+          const newPatchesHorizontal = Math.floor(scaledWidth / 32);
+          const newPatchesVertical = Math.floor(scaledHeight / 32);
+          
+          // Adjust to ensure we fit within limit
+          const finalPatchesHorizontal = Math.min(newPatchesHorizontal, Math.floor(Math.sqrt(1536 * newPatchesVertical / newPatchesHorizontal)));
+          const finalPatchesVertical = Math.min(newPatchesVertical, Math.floor(Math.sqrt(1536 * newPatchesHorizontal / newPatchesVertical)));
+          
+          const finalPatches = finalPatchesHorizontal * finalPatchesVertical;
+          
+          explanation += `
+            <p>Scaled width: ~${scaledWidth}px</p>
+            <p>Scaled height: ~${scaledHeight}px</p>
+            <p>Final patches: ${finalPatches} (capped at 1536)</p>
+          `;
+          
+          // Apply model-specific multiplier
+          const baseTokens = Math.min(finalPatches, 1536);
+          tokenCost = Math.round(baseTokens * model.multiplier);
+          
+          explanation += `
+            <p><strong>Step 3:</strong> Apply ${model.name} multiplier</p>
+            <p>Base tokens: ${baseTokens}</p>
+            <p>Multiplier: ${model.multiplier}</p>
+            <p>Final token cost: ${baseTokens} × ${model.multiplier} = ${tokenCost} tokens</p>
+          `;
+        } else {
+          // No scaling needed
+          explanation += `<p><strong>Step 2:</strong> No scaling needed (under 1536 patch limit)</p>`;
+          
+          // Apply model-specific multiplier
+          tokenCost = Math.round(totalPatches * model.multiplier);
+          
+          if (model.multiplier !== 1) {
+            explanation += `
+              <p><strong>Step 3:</strong> Apply ${model.name} multiplier</p>
+              <p>Base tokens: ${totalPatches}</p>
+              <p>Multiplier: ${model.multiplier}</p>
+              <p>Final token cost: ${totalPatches} × ${model.multiplier} = ${tokenCost} tokens</p>
+            `;
+          } else {
+            explanation += `<p><strong>Final token cost:</strong> ${tokenCost} tokens</p>`;
+          }
+        }
       }
       
       document.getElementById('token-cost').textContent = `${tokenCost} tokens`;
       document.getElementById('calculation-explanation').innerHTML = explanation;
       
-      // Calculate images per dollar
-      calculateImagesPerDollar(tokenCost);
+      // Calculate cost per dollar
+      calculateImagesPerDollar(tokenCost, model.pricePerMillionTokens);
     }
     
-    function calculateImagesPerDollar(tokenCost) {
+    function calculateImagesPerDollar(tokenCost, pricePerMillionTokens) {
       // Calculate how many tokens per dollar
-      const tokensPerDollar = 1000000 / PRICE_PER_MILLION_TOKENS;
+      const tokensPerDollar = 1000000 / pricePerMillionTokens;
       
       // Calculate how many images per dollar
       const imagesPerDollar = tokensPerDollar / tokenCost;
@@ -404,13 +673,13 @@
       const formattedImagesPerDollar = imagesPerDollar.toFixed(2);
       
       // Calculate cost per image
-      const costPerImage = (tokenCost / 1000000) * PRICE_PER_MILLION_TOKENS;
+      const costPerImage = (tokenCost / 1000000) * pricePerMillionTokens;
       const formattedCostPerImage = costPerImage.toFixed(6);
       
       document.getElementById('images-per-dollar').textContent = `${formattedImagesPerDollar} images per $1`;
       
       document.getElementById('dollar-explanation').innerHTML = `
-        <p>With a price of $${PRICE_PER_MILLION_TOKENS} per 1M tokens:</p>
+        <p>With a price of $${pricePerMillionTokens.toFixed(2)} per 1M tokens:</p>
         <p>Cost per image: $${formattedCostPerImage}</p>
         <p>Tokens per dollar: ${(tokensPerDollar).toLocaleString()} tokens</p>
         <p>$1 allows you to generate approximately ${formattedImagesPerDollar} images at the specified size and detail level.</p>
@@ -425,8 +694,8 @@
       }
     }
     
-    // Add animation for buttons
-    const buttons = document.querySelectorAll('.neo-button');
+    // Add animation for buttons and interactive elements
+    const buttons = document.querySelectorAll('.neo-button, .tab-button');
     buttons.forEach(button => {
       button.addEventListener('mousedown', () => {
         button.style.transform = 'translate(2px, 2px)';
@@ -443,9 +712,6 @@
         button.style.boxShadow = '';
       });
     });
-    
-    // Initialize with default calculation
-    calculateCost();
   </script>
 </body>
 </html>
