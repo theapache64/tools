@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dig Interface Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.125rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .nameserver-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .ns-button {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .ns-button:hover {
+            background: #e2e8f0;
+        }
+
+        .query-button {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .query-button:hover:not(:disabled) {
+            background: #2563eb;
+        }
+
+        .query-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            width: 1rem;
+            height: 1rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-alert {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .info-cards {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+        }
+
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-card-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .info-card-text {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-button {
+            padding: 0.5rem 0.75rem;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: background-color 0.2s;
+        }
+
+        .action-button:hover {
+            background: #e2e8f0;
+        }
+
+        .results-container {
+            background: #0f172a;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            min-height: 400px;
+        }
+
+        .results-output {
+            color: #22c55e;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .no-results {
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .no-results-icon {
+            width: 3rem;
+            height: 3rem;
+            color: #9ca3af;
+            margin-bottom: 1rem;
+        }
+
+        .no-results-title {
+            font-size: 1.125rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .no-results-text {
+            color: #9ca3af;
+        }
+
+        .command-preview {
+            margin-top: 1.5rem;
+            background: #1e293b;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+
+        .command-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .command-label {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .command-text {
+            color: #22c55e;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            fill: currentColor;
+        }
+
+        .icon-lg {
+            width: 2rem;
+            height: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <svg class="icon-lg" viewBox="0 0 24 24">
+                    <path d="M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM4 7v13h16V7H4zm8 2h6v2h-6V9zm0 4h6v2h-6v-2z"/>
+                </svg>
+                Dig Interface Tool
+            </h1>
+            <p>DNS lookup utility with a modern web interface</p>
+        </div>
+
+        <!-- Main Interface -->
+        <div class="main-grid">
+            <!-- Input Panel -->
+            <div class="input-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <h2 class="card-title">Query Settings</h2>
+                    </div>
+
+                    <!-- Domain Input -->
+                    <div class="form-group">
+                        <label class="form-label">Domain Name</label>
+                        <input type="text" id="domain" class="form-input" placeholder="example.com">
+                    </div>
+
+                    <!-- Record Type -->
+                    <div class="form-group">
+                        <label class="form-label">Record Type</label>
+                        <select id="recordType" class="form-select">
+                            <option value="A">A</option>
+                            <option value="AAAA">AAAA</option>
+                            <option value="CNAME">CNAME</option>
+                            <option value="MX">MX</option>
+                            <option value="NS">NS</option>
+                            <option value="PTR">PTR</option>
+                            <option value="SOA">SOA</option>
+                            <option value="SRV">SRV</option>
+                            <option value="TXT">TXT</option>
+                            <option value="ANY">ANY</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Nameserver -->
+                    <div class="form-group">
+                        <label class="form-label">Custom Nameserver (Optional)</label>
+                        <input type="text" id="nameserver" class="form-input" placeholder="8.8.8.8">
+                    </div>
+
+                    <!-- Quick Select Nameservers -->
+                    <div class="form-group">
+                        <label class="form-label">Quick Select</label>
+                        <div class="nameserver-grid">
+                            <button class="ns-button" onclick="setNameserver('8.8.8.8')">Google DNS</button>
+                            <button class="ns-button" onclick="setNameserver('1.1.1.1')">Cloudflare DNS</button>
+                            <button class="ns-button" onclick="setNameserver('9.9.9.9')">Quad9 DNS</button>
+                            <button class="ns-button" onclick="setNameserver('208.67.222.222')">OpenDNS</button>
+                        </div>
+                    </div>
+
+                    <!-- Query Button -->
+                    <button id="queryButton" class="query-button" onclick="executeDigQuery()">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                        Run Dig Query
+                    </button>
+
+                    <div id="errorAlert" class="error-alert" style="display: none;"></div>
+                </div>
+
+                <!-- Info Cards -->
+                <div class="info-cards">
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <svg class="icon" viewBox="0 0 24 24" style="color: #10b981;">
+                                <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10.5V11.5C14.8,12.4 14.1,13.2 13.2,13.2H10.8C9.9,13.2 9.2,12.4 9.2,11.5V10.5C9.2,8.6 10.6,7 12,7Z"/>
+                            </svg>
+                            <h3 class="info-card-title">Secure DNS</h3>
+                        </div>
+                        <p class="info-card-text">All queries are simulated for demonstration purposes. No actual DNS requests are made.</p>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <svg class="icon" viewBox="0 0 24 24" style="color: #3b82f6;">
+                                <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2Z"/>
+                            </svg>
+                            <h3 class="info-card-title">Quick Lookup</h3>
+                        </div>
+                        <p class="info-card-text">Press Enter in the domain field for quick queries.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <div class="card">
+                    <div class="results-header">
+                        <div class="card-header" style="margin-bottom: 0;">
+                            <svg class="icon" viewBox="0 0 24 24" style="color: #10b981;">
+                                <path d="M4,1C2.89,1 2,1.89 2,3V7C2,8.11 2.89,9 4,9H1V11H13V9H10C11.11,9 12,8.11 12,7V3C12,1.89 11.11,1 10,1H4M4,3H10V7H4V3M3,13V18L3,20H5V18H9V20H11V18L11,13H3M5,15H9V16H5V15Z"/>
+                            </svg>
+                            <h2 class="card-title">Query Results</h2>
+                        </div>
+                        <div class="results-actions" id="resultsActions" style="display: none;">
+                            <button class="action-button" onclick="copyResults()">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/>
+                                </svg>
+                                Copy
+                            </button>
+                            <button class="action-button" onclick="downloadResults()">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+                                </svg>
+                                Download
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="resultsContainer">
+                        <div class="no-results">
+                            <svg class="no-results-icon" viewBox="0 0 24 24">
+                                <path d="M4,1C2.89,1 2,1.89 2,3V7C2,8.11 2.89,9 4,9H1V11H13V9H10C11.11,9 12,8.11 12,7V3C12,1.89 11.11,1 10,1H4M4,3H10V7H4V3M3,13V18L3,20H5V18H9V20H11V18L11,13H3M5,15H9V16H5V15Z"/>
+                            </svg>
+                            <p class="no-results-title">No query results yet</p>
+                            <p class="no-results-text">Enter a domain name and click "Run Dig Query" to see results</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Command Preview -->
+                <div id="commandPreview" class="command-preview" style="display: none;">
+                    <div class="command-header">
+                        <svg class="icon" viewBox="0 0 24 24" style="color: #9ca3af;">
+                            <path d="M4,1C2.89,1 2,1.89 2,3V7C2,8.11 2.89,9 4,9H1V11H13V9H10C11.11,9 12,8.11 12,7V3C12,1.89 11.11,1 10,1H4M4,3H10V7H4V3M3,13V18L3,20H5V18H9V20H11V18L11,13H3M5,15H9V16H5V15Z"/>
+                        </svg>
+                        <span class="command-label">Command Preview</span>
+                    </div>
+                    <div id="commandText" class="command-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResults = '';
+        let isLoading = false;
+
+        // Event listeners
+        document.getElementById('domain').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !isLoading) {
+                executeDigQuery();
+            }
+        });
+
+        document.getElementById('domain').addEventListener('input', updateCommandPreview);
+        document.getElementById('recordType').addEventListener('change', updateCommandPreview);
+        document.getElementById('nameserver').addEventListener('input', updateCommandPreview);
+
+        function setNameserver(ns) {
+            document.getElementById('nameserver').value = ns;
+            updateCommandPreview();
+        }
+
+        function updateCommandPreview() {
+            const domain = document.getElementById('domain').value.trim();
+            const recordType = document.getElementById('recordType').value;
+            const nameserver = document.getElementById('nameserver').value.trim();
+            const preview = document.getElementById('commandPreview');
+            const commandText = document.getElementById('commandText');
+
+            if (domain) {
+                let command = 'dig ';
+                if (nameserver) {
+                    command += `@${nameserver} `;
+                }
+                command += `${domain} ${recordType}`;
+                commandText.textContent = command;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        async function executeDigQuery() {
+            const domain = document.getElementById('domain').value.trim();
+            const recordType = document.getElementById('recordType').value;
+            const nameserver = document.getElementById('nameserver').value.trim();
+            const errorAlert = document.getElementById('errorAlert');
+            const queryButton = document.getElementById('queryButton');
+
+            if (!domain) {
+                showError('Please enter a domain name');
+                return;
+            }
+
+            hideError();
+            setLoading(true);
+
+            try {
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+                const mockOutput = generateMockDigOutput(domain, recordType, nameserver);
+                const command = `dig ${nameserver ? `@${nameserver} ` : ''}${domain} ${recordType}`;
+                
+                currentResults = `; <<>> DiG 9.18.1 <<>> ${nameserver ? `@${nameserver} ` : ''}${domain} ${recordType}
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: ${Math.floor(Math.random() * 65536)}
+;; flags: qr rd ra; QUERY: 1, ANSWER: ${mockOutput.answers.length}, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+
+;; QUESTION SECTION:
+;${domain}.			IN	${recordType}
+
+;; ANSWER SECTION:
+${mockOutput.answers.join('\n')}
+
+;; Query time: ${Math.floor(Math.random() * 100)} msec
+;; SERVER: ${nameserver || '192.168.1.1'}#53(${nameserver || '192.168.1.1'})
+;; WHEN: ${new Date().toString()}
+;; MSG SIZE  rcvd: ${Math.floor(Math.random() * 200) + 100}`;
+
+                displayResults(currentResults);
+            } catch (error) {
+                showError('Query failed. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function generateMockDigOutput(domain, type, ns) {
+            const ttl = Math.floor(Math.random() * 3600) + 300;
+            
+            switch (type) {
+                case 'A':
+                    return {
+                        answers: [
+                            `${domain}.		${ttl}	IN	A	${generateRandomIP()}`,
+                            `${domain}.		${ttl}	IN	A	${generateRandomIP()}`
+                        ]
+                    };
+                case 'AAAA':
+                    return {
+                        answers: [
+                            `${domain}.		${ttl}	IN	AAAA	2001:db8::${Math.floor(Math.random() * 255).toString(16)}:${Math.floor(Math.random() * 255).toString(16)}`
+                        ]
+                    };
+                case 'MX':
+                    return {
+                        answers: [
+                            `${domain}.		${ttl}	IN	MX	10 mail.${domain}.`,
+                            `${domain}.		${ttl}	IN	MX	20 mail2.${domain}.`
+                        ]
+                    };
+                case 'CNAME':
+                    return {
+                        answers: [
+                            `${domain}.		${ttl}	IN	CNAME	www.${domain}.`
+                        ]
+                    };
+                case 'NS':
+                    return {
+                        answers: [
+                            `${domain}.		${ttl}	IN	NS	ns1.${domain}.`,
+                            `${domain}.		${ttl}	IN	NS	ns2.${domain}.`
+                        ]
+                    };
+                case 'TXT':
+                    return {
+                        answers: [
+                            `${domain}.		${ttl}	IN	TXT	"v=spf1 include:_spf.google.com ~all"`,
+                            `${domain}.		${ttl}	IN	TXT	"google-site-verification=abcd1234"`
+                        ]
+                    };
+                case 'SOA':
+                    return {
+                        answers: [
+                            `${domain}.		${ttl}	IN	SOA	ns1.${domain}. admin.${domain}. 2024052201 7200 3600 604800 86400`
+                        ]
+                    };
+                default:
+                    return {
+                        answers: [
+                            `${domain}.		${ttl}	IN	A	${generateRandomIP()}`
+                        ]
+                    };
+            }
+        }
+
+        function generateRandomIP() {
+            return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            const actions = document.getElementById('resultsActions');
+            
+            container.innerHTML = `
+                <div class="results-container">
+                    <pre class="results-output">${results}</pre>
+                </div>
+            `;
+            
+            actions.style.display = 'flex';
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            const button = document.getElementById('queryButton');
+            
+            if (loading) {
+                button.innerHTML = `
+                    <div class="spinner"></div>
+                    Querying...
+                `;
+                button.disabled = true;
+            } else {
+                button.innerHTML = `
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    Run Dig Query
+                `;
+                button.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            errorAlert.textContent = message;
+            errorAlert.style.display = 'block';
+        }
+
+        function hideError() {
+            const errorAlert = document.getElementById('errorAlert');
+            errorAlert.style.display = 'none';
+        }
+
+        function copyResults() {
+            if (currentResults) {
+                navigator.clipboard.writeText(currentResults).then(() => {
+                    // Could add a toast notification here
+                });
+            }
+        }
+
+        function downloadResults() {
+            if (currentResults) {
+                const domain = document.getElementById('domain').value.trim();
+                const recordType = document.getElementById('recordType').value;
+                const blob = new Blob([currentResults], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dig-${domain}-${recordType}-${Date.now()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // Initialize command preview
+        updateCommandPreview();
+    </script>
+</body>
+</html>
