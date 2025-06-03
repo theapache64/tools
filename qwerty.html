@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QWERTY Keyboard Distance Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .stats-card, .transitions-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f0f0f0;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .age-estimate {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .age-estimate h3 {
+            color: #8b5a6b;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .age-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #8b5a6b;
+        }
+
+        .transitions-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+            padding: 15px;
+            background: #fafafa;
+        }
+
+        .transition-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background: white;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .transition-chars {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .transition-distance {
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .pattern-analysis {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .pattern-item {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .pattern-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .pattern-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .pattern-percent {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .results {
+                grid-template-columns: 1fr;
+            }
+            
+            .pattern-analysis {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎹 QWERTY Distance Analyzer</h1>
+        
+        <div class="input-section">
+            <label for="textInput">Enter text to analyze:</label>
+            <textarea 
+                id="textInput" 
+                placeholder="Type or paste the text here... (e.g., random keyboard mashing from a child)"
+            ></textarea>
+            <button class="analyze-btn" onclick="analyzeText()">🔍 Analyze Keyboard Distance</button>
+        </div>
+
+        <div id="resultsSection" class="hidden">
+            <div class="results">
+                <div class="stats-card">
+                    <h3 class="card-title">📊 Statistics</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Characters:</span>
+                        <span class="stat-value" id="totalChars">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Transitions:</span>
+                        <span class="stat-value" id="totalTransitions">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Average Distance:</span>
+                        <span class="stat-value" id="avgDistance">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Max Distance:</span>
+                        <span class="stat-value" id="maxDistance">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Min Distance:</span>
+                        <span class="stat-value" id="minDistance">0</span>
+                    </div>
+
+                    <div class="age-estimate">
+                        <h3>🎂 Estimated Age</h3>
+                        <div class="age-value" id="ageEstimate">-</div>
+                    </div>
+
+                    <div class="pattern-analysis">
+                        <div class="pattern-item">
+                            <div class="pattern-label">Adjacent Keys</div>
+                            <div class="pattern-value" id="adjacentCount">0</div>
+                            <div class="pattern-percent" id="adjacentPercent">0%</div>
+                        </div>
+                        <div class="pattern-item">
+                            <div class="pattern-label">Nearby Keys</div>
+                            <div class="pattern-value" id="nearbyCount">0</div>
+                            <div class="pattern-percent" id="nearbyPercent">0%</div>
+                        </div>
+                        <div class="pattern-item">
+                            <div class="pattern-label">Far Keys</div>
+                            <div class="pattern-value" id="farCount">0</div>
+                            <div class="pattern-percent" id="farPercent">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transitions-card">
+                    <h3 class="card-title">🔄 Character Transitions</h3>
+                    <div class="transitions-list" id="transitionsList">
+                        <!-- Transitions will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // QWERTY keyboard layout with coordinates
+        const qwertyLayout = {
+            'q': [0, 0], 'w': [1, 0], 'e': [2, 0], 'r': [3, 0], 't': [4, 0], 'y': [5, 0], 'u': [6, 0], 'i': [7, 0], 'o': [8, 0], 'p': [9, 0],
+            'a': [0, 1], 's': [1, 1], 'd': [2, 1], 'f': [3, 1], 'g': [4, 1], 'h': [5, 1], 'j': [6, 1], 'k': [7, 1], 'l': [8, 1],
+            'z': [0, 2], 'x': [1, 2], 'c': [2, 2], 'v': [3, 2], 'b': [4, 2], 'n': [5, 2], 'm': [6, 2]
+        };
+
+        function calculateDistance(char1, char2) {
+            const pos1 = qwertyLayout[char1.toLowerCase()];
+            const pos2 = qwertyLayout[char2.toLowerCase()];
+            if (!pos1 || !pos2) return null;
+            
+            return Math.sqrt(Math.pow(pos2[0] - pos1[0], 2) + Math.pow(pos2[1] - pos1[1], 2));
+        }
+
+        function estimateAge(avgDistance, adjacentPercent, farPercent, totalChars) {
+            let ageScore = 0;
+            
+            // Factor 1: Average distance (higher = younger)
+            if (avgDistance > 3.0) ageScore += 3;
+            else if (avgDistance > 2.5) ageScore += 2;
+            else if (avgDistance > 2.0) ageScore += 1;
+            
+            // Factor 2: Far key percentage (higher = younger)
+            if (farPercent > 40) ageScore += 3;
+            else if (farPercent > 30) ageScore += 2;
+            else if (farPercent > 20) ageScore += 1;
+            
+            // Factor 3: Adjacent key percentage (lower = younger)
+            if (adjacentPercent < 30) ageScore += 2;
+            else if (adjacentPercent < 40) ageScore += 1;
+            
+            // Factor 4: Text length (very long random text = younger)
+            if (totalChars > 50) ageScore += 1;
+            
+            // Convert score to age estimate
+            if (ageScore >= 6) return "2-4 years old";
+            else if (ageScore >= 4) return "3-5 years old";
+            else if (ageScore >= 2) return "4-6 years old";
+            else return "6+ years old";
+        }
+
+        function analyzeText() {
+            const text = document.getElementById('textInput').value.trim().toLowerCase();
+            
+            if (!text) {
+                alert('Please enter some text to analyze!');
+                return;
+            }
+
+            // Filter only QWERTY characters
+            const filteredText = text.split('').filter(char => qwertyLayout[char]).join('');
+            
+            if (filteredText.length < 2) {
+                alert('Please enter text with at least 2 valid QWERTY characters!');
+                return;
+            }
+
+            // Calculate distances
+            const distances = [];
+            for (let i = 0; i < filteredText.length - 1; i++) {
+                const char1 = filteredText[i];
+                const char2 = filteredText[i + 1];
+                const distance = calculateDistance(char1, char2);
+                if (distance !== null) {
+                    distances.push({
+                        from: char1,
+                        to: char2,
+                        distance: distance
+                    });
+                }
+            }
+
+            if (distances.length === 0) {
+                alert('No valid character transitions found!');
+                return;
+            }
+
+            // Calculate statistics
+            const numericDistances = distances.map(d => d.distance);
+            const avgDistance = numericDistances.reduce((a, b) => a + b, 0) / numericDistances.length;
+            const maxDistance = Math.max(...numericDistances);
+            const minDistance = Math.min(...numericDistances);
+
+            // Categorize distances
+            const adjacent = numericDistances.filter(d => d <= 1.41);
+            const nearby = numericDistances.filter(d => d > 1.41 && d <= 2.24);
+            const far = numericDistances.filter(d => d > 2.24);
+
+            const adjacentPercent = (adjacent.length / numericDistances.length) * 100;
+            const nearbyPercent = (nearby.length / numericDistances.length) * 100;
+            const farPercent = (far.length / numericDistances.length) * 100;
+
+            // Update UI
+            document.getElementById('totalChars').textContent = filteredText.length;
+            document.getElementById('totalTransitions').textContent = distances.length;
+            document.getElementById('avgDistance').textContent = avgDistance.toFixed(2) + ' units';
+            document.getElementById('maxDistance').textContent = maxDistance.toFixed(2) + ' units';
+            document.getElementById('minDistance').textContent = minDistance.toFixed(2) + ' units';
+
+            document.getElementById('adjacentCount').textContent = adjacent.length;
+            document.getElementById('adjacentPercent').textContent = adjacentPercent.toFixed(1) + '%';
+            document.getElementById('nearbyCount').textContent = nearby.length;
+            document.getElementById('nearbyPercent').textContent = nearbyPercent.toFixed(1) + '%';
+            document.getElementById('farCount').textContent = far.length;
+            document.getElementById('farPercent').textContent = farPercent.toFixed(1) + '%';
+
+            // Age estimation
+            const ageEstimate = estimateAge(avgDistance, adjacentPercent, farPercent, filteredText.length);
+            document.getElementById('ageEstimate').textContent = ageEstimate;
+
+            // Populate transitions list
+            const transitionsList = document.getElementById('transitionsList');
+            transitionsList.innerHTML = '';
+            
+            distances.forEach((d, i) => {
+                const item = document.createElement('div');
+                item.className = 'transition-item';
+                item.innerHTML = `
+                    <span class="transition-chars">${i + 1}. ${d.from} → ${d.to}</span>
+                    <span class="transition-distance">${d.distance.toFixed(2)} units</span>
+                `;
+                transitionsList.appendChild(item);
+            });
+
+            // Show results
+            document.getElementById('resultsSection').classList.remove('hidden');
+        }
+
+        // Allow Enter key to trigger analysis
+        document.getElementById('textInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyzeText();
+            }
+        });
+
+        // Pre-fill with the example text
+        document.getElementById('textInput').value = 'eiifcbfhfltgvttcgjrtcthfudijgcbgvdhgudjidrbk';
+    </script>
+</body>
+</html>
