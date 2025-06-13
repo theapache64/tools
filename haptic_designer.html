@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haptic Pattern Designer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-stroke: 4px transparent;
+            color: transparent;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #chart {
+            width: 100%;
+            height: 400px;
+            cursor: crosshair;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.8) 0%, 
+                rgba(240, 248, 255, 0.9) 50%, 
+                rgba(255, 255, 255, 0.8) 100%);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-group h3 {
+            margin-bottom: 15px;
+            color: #fff;
+            font-size: 1.3em;
+        }
+
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .output {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .output h3 {
+            margin-bottom: 15px;
+            color: #4ecdc4;
+            font-size: 1.3em;
+        }
+
+        .code-block {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4ecdc4;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            color: #e8e8e8;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #4ecdc4, #6ee8e0);
+            color: white;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.6);
+        }
+
+        .point {
+            fill: #ff6b6b;
+            stroke: #fff;
+            stroke-width: 2;
+            cursor: grab;
+        }
+
+        .point:hover {
+            fill: #ff8e8e;
+            r: 8;
+        }
+
+        .point.dragging {
+            cursor: grabbing;
+            fill: #4ecdc4;
+        }
+
+        .grid-line {
+            stroke: rgba(0, 0, 0, 0.1);
+            stroke-width: 1;
+        }
+
+        .axis-label {
+            font-size: 12px;
+            fill: #666;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Haptic Pattern Designer</h1>
+        
+        <div class="chart-container">
+            <svg id="chart"></svg>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <h3>⚙️ Pattern Controls</h3>
+                <div class="slider-container">
+                    <label for="duration">Total Duration (ms): <span id="durationValue">1000</span></label>
+                    <input type="range" id="duration" class="slider" min="200" max="3000" value="1000">
+                </div>
+                <div class="slider-container">
+                    <label for="resolution">Time Resolution (ms): <span id="resolutionValue">50</span></label>
+                    <input type="range" id="resolution" class="slider" min="10" max="100" value="50">
+                </div>
+                <div class="slider-container">
+                    <label for="smoothing">Curve Smoothing: <span id="smoothingValue">0.3</span></label>
+                    <input type="range" id="smoothing" class="slider" min="0" max="1" step="0.1" value="0.3">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🎛️ Vibration Settings</h3>
+                <div class="slider-container">
+                    <label for="maxAmplitude">Max Amplitude: <span id="maxAmplitudeValue">255</span></label>
+                    <input type="range" id="maxAmplitude" class="slider" min="50" max="255" value="255">
+                </div>
+                <div class="slider-container">
+                    <label for="minAmplitude">Min Amplitude: <span id="minAmplitudeValue">0</span></label>
+                    <input type="range" id="minAmplitude" class="slider" min="0" max="100" value="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="output">
+            <h3>📱 Generated Haptic Data</h3>
+            <div class="code-block" id="output"></div>
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="copyToClipboard()">📋 Copy Code</button>
+                <button class="btn btn-secondary" onclick="resetPattern()">🔄 Reset Pattern</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HapticDesigner {
+            constructor() {
+                this.svg = document.getElementById('chart');
+                this.points = [
+                    {x: 0, y: 0.8},
+                    {x: 0.2, y: 0.2},
+                    {x: 0.4, y: 0.9},
+                    {x: 0.7, y: 0.1},
+                    {x: 1, y: 0.5}
+                ];
+                this.isDragging = false;
+                this.dragIndex = -1;
+                
+                this.setupSVG();
+                this.setupEventListeners();
+                this.updateChart();
+                this.generateHapticData();
+            }
+
+            setupSVG() {
+                const rect = this.svg.getBoundingClientRect();
+                this.width = rect.width - 60;
+                this.height = rect.height - 60;
+                this.marginLeft = 40;
+                this.marginTop = 20;
+                
+                this.svg.innerHTML = '';
+                
+                // Create grid
+                for (let i = 0; i <= 10; i++) {
+                    const x = this.marginLeft + (i / 10) * this.width;
+                    const y = this.marginTop + (i / 10) * this.height;
+                    
+                    this.svg.innerHTML += `<line class="grid-line" x1="${x}" y1="${this.marginTop}" x2="${x}" y2="${this.marginTop + this.height}"></line>`;
+                    this.svg.innerHTML += `<line class="grid-line" x1="${this.marginLeft}" y1="${y}" x2="${this.marginLeft + this.width}" y2="${y}"></line>`;
+                }
+                
+                // Labels
+                this.svg.innerHTML += `<text class="axis-label" x="${this.marginLeft + this.width/2}" y="${this.marginTop + this.height + 35}">Time</text>`;
+                this.svg.innerHTML += `<text class="axis-label" x="15" y="${this.marginTop + this.height/2}" transform="rotate(-90, 15, ${this.marginTop + this.height/2})">Amplitude</text>`;
+            }
+
+            setupEventListeners() {
+                // Slider events
+                ['duration', 'resolution', 'smoothing', 'maxAmplitude', 'minAmplitude'].forEach(id => {
+                    const slider = document.getElementById(id);
+                    const valueSpan = document.getElementById(id + 'Value');
+                    
+                    slider.addEventListener('input', (e) => {
+                        valueSpan.textContent = e.target.value;
+                        this.generateHapticData();
+                    });
+                });
+
+                // Mouse events for dragging
+                this.svg.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                this.svg.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                this.svg.addEventListener('mouseup', this.handleMouseUp.bind(this));
+                this.svg.addEventListener('mouseleave', this.handleMouseUp.bind(this));
+                
+                // Touch events for mobile
+                this.svg.addEventListener('touchstart', this.handleTouchStart.bind(this));
+                this.svg.addEventListener('touchmove', this.handleTouchMove.bind(this));
+                this.svg.addEventListener('touchend', this.handleMouseUp.bind(this));
+            }
+
+            handleMouseDown(e) {
+                const rect = this.svg.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                this.dragIndex = this.findNearestPoint(x, y);
+                if (this.dragIndex !== -1) {
+                    this.isDragging = true;
+                    this.updatePointVisual(this.dragIndex, true);
+                }
+            }
+
+            handleTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = this.svg.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                this.dragIndex = this.findNearestPoint(x, y);
+                if (this.dragIndex !== -1) {
+                    this.isDragging = true;
+                    this.updatePointVisual(this.dragIndex, true);
+                }
+            }
+
+            handleMouseMove(e) {
+                if (!this.isDragging || this.dragIndex === -1) return;
+                
+                const rect = this.svg.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                this.updatePointPosition(x, y);
+            }
+
+            handleTouchMove(e) {
+                if (!this.isDragging || this.dragIndex === -1) return;
+                e.preventDefault();
+                
+                const touch = e.touches[0];
+                const rect = this.svg.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                this.updatePointPosition(x, y);
+            }
+
+            handleMouseUp() {
+                if (this.isDragging && this.dragIndex !== -1) {
+                    this.updatePointVisual(this.dragIndex, false);
+                }
+                this.isDragging = false;
+                this.dragIndex = -1;
+            }
+
+            updatePointPosition(x, y) {
+                const normalizedX = Math.max(0, Math.min(1, (x - this.marginLeft) / this.width));
+                const normalizedY = Math.max(0, Math.min(1, 1 - (y - this.marginTop) / this.height));
+                
+                // Don't allow first and last points to move horizontally
+                if (this.dragIndex === 0) {
+                    this.points[0].y = normalizedY;
+                } else if (this.dragIndex === this.points.length - 1) {
+                    this.points[this.dragIndex].y = normalizedY;
+                } else {
+                    this.points[this.dragIndex].x = normalizedX;
+                    this.points[this.dragIndex].y = normalizedY;
+                    
+                    // Keep points sorted by x
+                    this.points.sort((a, b) => a.x - b.x);
+                }
+                
+                this.updateChart();
+                this.generateHapticData();
+            }
+
+            findNearestPoint(mouseX, mouseY) {
+                let minDistance = Infinity;
+                let nearestIndex = -1;
+                
+                this.points.forEach((point, index) => {
+                    const x = this.marginLeft + point.x * this.width;
+                    const y = this.marginTop + (1 - point.y) * this.height;
+                    const distance = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
+                    
+                    if (distance < 20 && distance < minDistance) {
+                        minDistance = distance;
+                        nearestIndex = index;
+                    }
+                });
+                
+                return nearestIndex;
+            }
+
+            updateChart() {
+                // Remove existing points and path
+                const existingPoints = this.svg.querySelectorAll('.point');
+                const existingPath = this.svg.querySelector('.curve-path');
+                existingPoints.forEach(p => p.remove());
+                if (existingPath) existingPath.remove();
+                
+                // Draw curve
+                const pathData = this.generateCurvePath();
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', '#ff6b6b');
+                path.setAttribute('stroke-width', '3');
+                path.setAttribute('class', 'curve-path');
+                this.svg.appendChild(path);
+                
+                // Draw points
+                this.points.forEach((point, index) => {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', this.marginLeft + point.x * this.width);
+                    circle.setAttribute('cy', this.marginTop + (1 - point.y) * this.height);
+                    circle.setAttribute('r', '6');
+                    circle.setAttribute('class', 'point');
+                    circle.setAttribute('data-index', index);
+                    this.svg.appendChild(circle);
+                });
+            }
+
+            generateCurvePath() {
+                if (this.points.length < 2) return '';
+                
+                let pathData = `M ${this.marginLeft + this.points[0].x * this.width} ${this.marginTop + (1 - this.points[0].y) * this.height}`;
+                
+                const smoothing = parseFloat(document.getElementById('smoothing').value);
+                
+                if (smoothing === 0) {
+                    // Straight lines
+                    for (let i = 1; i < this.points.length; i++) {
+                        const x = this.marginLeft + this.points[i].x * this.width;
+                        const y = this.marginTop + (1 - this.points[i].y) * this.height;
+                        pathData += ` L ${x} ${y}`;
+                    }
+                } else {
+                    // Smooth curves
+                    for (let i = 1; i < this.points.length; i++) {
+                        const prev = this.points[i - 1];
+                        const curr = this.points[i];
+                        
+                        const x1 = this.marginLeft + prev.x * this.width;
+                        const y1 = this.marginTop + (1 - prev.y) * this.height;
+                        const x2 = this.marginLeft + curr.x * this.width;
+                        const y2 = this.marginTop + (1 - curr.y) * this.height;
+                        
+                        const cpx1 = x1 + (x2 - x1) * smoothing;
+                        const cpy1 = y1;
+                        const cpx2 = x2 - (x2 - x1) * smoothing;
+                        const cpy2 = y2;
+                        
+                        pathData += ` C ${cpx1} ${cpy1}, ${cpx2} ${cpy2}, ${x2} ${y2}`;
+                    }
+                }
+                
+                return pathData;
+            }
+
+            updatePointVisual(index, isDragging) {
+                const point = this.svg.querySelector(`[data-index="${index}"]`);
+                if (point) {
+                    if (isDragging) {
+                        point.classList.add('dragging');
+                    } else {
+                        point.classList.remove('dragging');
+                    }
+                }
+            }
+
+            generateHapticData() {
+                const duration = parseInt(document.getElementById('duration').value);
+                const resolution = parseInt(document.getElementById('resolution').value);
+                const maxAmplitude = parseInt(document.getElementById('maxAmplitude').value);
+                const minAmplitude = parseInt(document.getElementById('minAmplitude').value);
+                
+                const timings = [];
+                const amplitudes = [];
+                
+                // Sample the curve at regular intervals
+                const steps = Math.floor(duration / resolution);
+                
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const amplitude = this.interpolateAmplitude(t);
+                    const scaledAmplitude = Math.round(minAmplitude + amplitude * (maxAmplitude - minAmplitude));
+                    
+                    if (i === 0) {
+                        timings.push(0);
+                    } else {
+                        timings.push(resolution);
+                    }
+                    amplitudes.push(scaledAmplitude);
+                }
+                
+                this.displayHapticData(timings, amplitudes);
+            }
+
+            interpolateAmplitude(t) {
+                // Find the two points that bracket t
+                let i = 0;
+                while (i < this.points.length - 1 && this.points[i + 1].x < t) {
+                    i++;
+                }
+                
+                if (i === this.points.length - 1) {
+                    return this.points[i].y;
+                }
+                
+                const p1 = this.points[i];
+                const p2 = this.points[i + 1];
+                
+                // Linear interpolation
+                const localT = (t - p1.x) / (p2.x - p1.x);
+                return p1.y + (p2.y - p1.y) * localT;
+            }
+
+            displayHapticData(timings, amplitudes) {
+                const output = document.getElementById('output');
+                output.innerHTML = `HapticData(
+    timings = listOf(${timings.join(', ')}),
+    amplitudes = listOf(${amplitudes.join(', ')})
+)`;
+            }
+        }
+
+        // Initialize the designer
+        let designer;
+        window.addEventListener('load', () => {
+            designer = new HapticDesigner();
+        });
+
+        window.addEventListener('resize', () => {
+            if (designer) {
+                designer.setupSVG();
+                designer.updateChart();
+            }
+        });
+
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            navigator.clipboard.writeText(output.textContent).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'linear-gradient(45deg, #ff6b6b, #ff8e8e)';
+                }, 2000);
+            });
+        }
+
+        function resetPattern() {
+            designer.points = [
+                {x: 0, y: 0.8},
+                {x: 0.2, y: 0.2},
+                {x: 0.4, y: 0.9},
+                {x: 0.7, y: 0.1},
+                {x: 1, y: 0.5}
+            ];
+            designer.updateChart();
+            designer.generateHapticData();
+        }
+    </script>
+</body>
+</html>
