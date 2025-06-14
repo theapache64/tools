@@ -1,0 +1,13 @@
+# Node.js dependencies (only needed for GitHub Actions)
+node_modules/
+package.json
+package-lock.json
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
