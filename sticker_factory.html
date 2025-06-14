@@ -98,7 +98,8 @@
             justify-content: center;
             background-color: var(--light-gray);
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            padding: 40px;
         }
 
         .preview-area::before {
@@ -119,12 +120,12 @@
         }
 
         .preview-canvas {
-            max-width: calc(100% - 40px);
-            max-height: calc(100% - 40px);
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             position: relative;
             z-index: 1;
+            max-width: none;
+            max-height: none;
         }
 
         .placeholder-content {
@@ -783,13 +784,18 @@
             }
 
             setCanvasDisplaySize(canvasWidth, canvasHeight) {
-                // Calculate display size while maintaining aspect ratio (increased max size)
-                const maxDisplayWidth = 500;
-                const maxDisplayHeight = 350;
+                // Calculate display size while maintaining aspect ratio and container constraints
+                const previewArea = document.getElementById('previewArea');
+                const containerWidth = previewArea.clientWidth - 80; // Account for padding
+                const containerHeight = Math.max(400, previewArea.clientHeight) - 80; // Minimum height with padding
+                
+                const maxDisplayWidth = Math.min(800, containerWidth); // Increased max width
+                const maxDisplayHeight = Math.min(600, containerHeight); // Increased max height
                 const aspectRatio = canvasWidth / canvasHeight;
                 
                 let displayWidth, displayHeight;
                 
+                // Calculate size that fits within container while maintaining aspect ratio
                 if (aspectRatio > maxDisplayWidth / maxDisplayHeight) {
                     displayWidth = Math.min(maxDisplayWidth, canvasWidth);
                     displayHeight = displayWidth / aspectRatio;
@@ -798,8 +804,8 @@
                     displayWidth = displayHeight * aspectRatio;
                 }
 
-                // Scale up the display if it's too small
-                const minDisplaySize = 200;
+                // Ensure minimum display size for usability
+                const minDisplaySize = 150;
                 if (displayWidth < minDisplaySize && displayHeight < minDisplaySize) {
                     if (displayWidth < displayHeight) {
                         displayWidth = minDisplaySize;
@@ -810,8 +816,13 @@
                     }
                 }
 
+                // Set the canvas display size
                 this.canvas.style.width = displayWidth + 'px';
                 this.canvas.style.height = displayHeight + 'px';
+                
+                // Adjust preview area height to accommodate the canvas
+                const neededHeight = Math.max(400, displayHeight + 80);
+                previewArea.style.minHeight = neededHeight + 'px';
             }
 
             downloadSticker() {
