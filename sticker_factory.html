@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNG to Laptop Sticker Converter</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #000;
+            --secondary-color: #6c757d;
+            --light-gray: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            background-color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--primary-color);
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: var(--light-gray);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: #f1f3f4;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: #e9ecef;
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .control-section {
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .color-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: white;
+        }
+
+        .color-input {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .color-value {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            flex: 1;
+        }
+
+        .preview-area {
+            min-height: 400px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light-gray);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(45deg, #e0e0e0 25%, transparent 25%), 
+                linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #e0e0e0 75%), 
+                linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            opacity: 0.8;
+        }
+
+        .preview-canvas {
+            max-width: calc(100% - 40px);
+            max-height: calc(100% - 40px);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .placeholder-content {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 0.75rem 2rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #333;
+            border-color: #333;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .form-range {
+            height: 8px;
+            background: #d1d5db;
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .form-range::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .form-range::-moz-range-track {
+            height: 8px;
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        .slider-value {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem 0;
+            }
+            
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+            
+            .preview-area {
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-4 mb-2">🎨 Sticker Maker</h1>
+                    <p class="lead mb-0">Transform your PNG images into laptop stickers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <!-- Upload Section -->
+                <div class="upload-area mb-4" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <h5 class="mb-2">Drop your image here</h5>
+                    <p class="text-muted mb-0">or click to browse • PNG, JPEG, WebP supported</p>
+                </div>
+                
+                <input type="file" id="fileInput" class="file-input" accept="image/png,image/jpeg,image/jpg,image/webp">
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="row d-none" id="controlsSection">
+            <div class="col-12">
+                <div class="control-section">
+                    <h5 class="section-title">Customize Your Sticker</h5>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label fw-semibold">Background Color</label>
+                            <div class="color-input-wrapper">
+                                <input type="color" id="bgColor" class="color-input" value="#ffffff">
+                                <span class="color-value" id="bgColorValue">#ffffff</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label fw-semibold">Stroke Color</label>
+                            <div class="color-input-wrapper">
+                                <input type="color" id="strokeColor" class="color-input" value="#ffffff">
+                                <span class="color-value" id="strokeColorValue">#ffffff</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label fw-semibold">Padding</label>
+                            <input type="range" id="padding" class="form-range" min="0" max="250" value="20">
+                            <div class="slider-value" id="paddingValue">20px</div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label fw-semibold">Stroke Width</label>
+                            <input type="range" id="strokeWidth" class="form-range" min="0" max="250" value="8">
+                            <div class="slider-value" id="strokeWidthValue">8px</div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label fw-semibold">Corner Radius</label>
+                            <input type="range" id="cornerRadius" class="form-range" min="0" max="250" value="15">
+                            <div class="slider-value" id="cornerRadiusValue">15px</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="preview-area mb-4" id="previewArea">
+                    <canvas id="canvas" class="preview-canvas d-none"></canvas>
+                    <div class="placeholder-content" id="placeholder">
+                        Preview will appear here after uploading an image
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Section -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <button class="btn btn-primary btn-lg" id="downloadBtn" disabled>
+                    📥 Download High-Quality Sticker
+                </button>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <hr>
+                <p class="text-center text-muted small mb-0">
+                    Your images are processed locally in your browser. Nothing is uploaded to any server.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class StickerMaker {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.originalImage = null;
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('fileInput');
+                const bgColor = document.getElementById('bgColor');
+                const strokeColor = document.getElementById('strokeColor');
+                const padding = document.getElementById('padding');
+                const strokeWidth = document.getElementById('strokeWidth');
+                const cornerRadius = document.getElementById('cornerRadius');
+                const downloadBtn = document.getElementById('downloadBtn');
+
+                // File upload
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
+                uploadArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                uploadArea.addEventListener('drop', this.handleDrop.bind(this));
+                fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // Controls
+                bgColor.addEventListener('input', this.updatePreview.bind(this));
+                strokeColor.addEventListener('input', this.updatePreview.bind(this));
+                padding.addEventListener('input', this.updatePreview.bind(this));
+                strokeWidth.addEventListener('input', this.updatePreview.bind(this));
+                cornerRadius.addEventListener('input', this.updatePreview.bind(this));
+
+                // Color value display
+                bgColor.addEventListener('input', () => {
+                    document.getElementById('bgColorValue').textContent = bgColor.value;
+                });
+                strokeColor.addEventListener('input', () => {
+                    document.getElementById('strokeColorValue').textContent = strokeColor.value;
+                });
+
+                // Slider value display
+                padding.addEventListener('input', () => {
+                    document.getElementById('paddingValue').textContent = padding.value + 'px';
+                });
+                strokeWidth.addEventListener('input', () => {
+                    document.getElementById('strokeWidthValue').textContent = strokeWidth.value + 'px';
+                });
+                cornerRadius.addEventListener('input', () => {
+                    document.getElementById('cornerRadiusValue').textContent = cornerRadius.value + 'px';
+                });
+
+                // Download
+                downloadBtn.addEventListener('click', this.downloadSticker.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                document.getElementById('uploadArea').classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                document.getElementById('uploadArea').classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                document.getElementById('uploadArea').classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.loadImage(files[0]);
+                }
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.loadImage(file);
+                }
+            }
+
+            loadImage(file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.originalImage = img;
+                        this.showControls();
+                        this.updatePreview();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            showControls() {
+                document.getElementById('controlsSection').classList.remove('d-none');
+                document.getElementById('canvas').classList.remove('d-none');
+                document.getElementById('placeholder').style.display = 'none';
+                document.getElementById('downloadBtn').disabled = false;
+            }
+
+            updatePreview() {
+                if (!this.originalImage) return;
+
+                const bgColor = document.getElementById('bgColor').value;
+                const strokeColor = document.getElementById('strokeColor').value;
+                const paddingValue = parseInt(document.getElementById('padding').value);
+                const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+                const cornerRadius = parseInt(document.getElementById('cornerRadius').value);
+
+                // Calculate total canvas size: image + padding + stroke
+                const totalPadding = paddingValue + strokeWidth;
+                const canvasWidth = this.originalImage.width + (totalPadding * 2);
+                const canvasHeight = this.originalImage.height + (totalPadding * 2);
+
+                // Set canvas size
+                this.canvas.width = canvasWidth;
+                this.canvas.height = canvasHeight;
+
+                // Calculate display size while maintaining aspect ratio (increased max size)
+                const maxDisplayWidth = 500;
+                const maxDisplayHeight = 350;
+                const aspectRatio = canvasWidth / canvasHeight;
+                
+                let displayWidth, displayHeight;
+                
+                if (aspectRatio > maxDisplayWidth / maxDisplayHeight) {
+                    displayWidth = Math.min(maxDisplayWidth, canvasWidth);
+                    displayHeight = displayWidth / aspectRatio;
+                } else {
+                    displayHeight = Math.min(maxDisplayHeight, canvasHeight);
+                    displayWidth = displayHeight * aspectRatio;
+                }
+
+                // Scale up the display if it's too small
+                const minDisplaySize = 200;
+                if (displayWidth < minDisplaySize && displayHeight < minDisplaySize) {
+                    if (displayWidth < displayHeight) {
+                        displayWidth = minDisplaySize;
+                        displayHeight = minDisplaySize / aspectRatio;
+                    } else {
+                        displayHeight = minDisplaySize;
+                        displayWidth = minDisplaySize * aspectRatio;
+                    }
+                }
+
+                this.canvas.style.width = displayWidth + 'px';
+                this.canvas.style.height = displayHeight + 'px';
+
+                this.ctx.imageSmoothingEnabled = true;
+                this.ctx.imageSmoothingQuality = 'high';
+
+                // Clear canvas
+                this.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+                // Position for the outer shape (background + stroke)
+                const outerX = strokeWidth / 2;
+                const outerY = strokeWidth / 2;
+                const outerWidth = canvasWidth - strokeWidth;
+                const outerHeight = canvasHeight - strokeWidth;
+
+                // Position for the inner image (rectangular, no corner radius)
+                const imageX = totalPadding;
+                const imageY = totalPadding;
+                const imageWidth = this.originalImage.width;
+                const imageHeight = this.originalImage.height;
+
+                // Create outer rounded rectangle path for background
+                this.ctx.beginPath();
+                this.ctx.moveTo(outerX + cornerRadius, outerY);
+                this.ctx.lineTo(outerX + outerWidth - cornerRadius, outerY);
+                this.ctx.quadraticCurveTo(outerX + outerWidth, outerY, outerX + outerWidth, outerY + cornerRadius);
+                this.ctx.lineTo(outerX + outerWidth, outerY + outerHeight - cornerRadius);
+                this.ctx.quadraticCurveTo(outerX + outerWidth, outerY + outerHeight, outerX + outerWidth - cornerRadius, outerY + outerHeight);
+                this.ctx.lineTo(outerX + cornerRadius, outerY + outerHeight);
+                this.ctx.quadraticCurveTo(outerX, outerY + outerHeight, outerX, outerY + outerHeight - cornerRadius);
+                this.ctx.lineTo(outerX, outerY + cornerRadius);
+                this.ctx.quadraticCurveTo(outerX, outerY, outerX + cornerRadius, outerY);
+                this.ctx.closePath();
+
+                // Fill background
+                this.ctx.fillStyle = bgColor;
+                this.ctx.fill();
+
+                // Add stroke (outside the image area)
+                if (strokeWidth > 0) {
+                    this.ctx.strokeStyle = strokeColor;
+                    this.ctx.lineWidth = strokeWidth;
+                    this.ctx.stroke();
+                }
+
+                // Draw image directly without clipping (rectangular)
+                this.ctx.drawImage(this.originalImage, imageX, imageY, imageWidth, imageHeight);
+            }
+
+            downloadSticker() {
+                if (!this.originalImage) return;
+
+                // Create a high-resolution canvas for download
+                const downloadCanvas = document.createElement('canvas');
+                const downloadCtx = downloadCanvas.getContext('2d');
+
+                const bgColor = document.getElementById('bgColor').value;
+                const strokeColor = document.getElementById('strokeColor').value;
+                const paddingValue = parseInt(document.getElementById('padding').value);
+                const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+                const cornerRadius = parseInt(document.getElementById('cornerRadius').value);
+
+                // Calculate total canvas size: image + padding + stroke
+                const totalPadding = paddingValue + strokeWidth;
+                downloadCanvas.width = this.originalImage.width + (totalPadding * 2);
+                downloadCanvas.height = this.originalImage.height + (totalPadding * 2);
+
+                downloadCtx.imageSmoothingEnabled = true;
+                downloadCtx.imageSmoothingQuality = 'high';
+
+                // Position for the outer shape (background + stroke)
+                const outerX = strokeWidth / 2;
+                const outerY = strokeWidth / 2;
+                const outerWidth = downloadCanvas.width - strokeWidth;
+                const outerHeight = downloadCanvas.height - strokeWidth;
+
+                // Position for the inner image (rectangular, no corner radius)
+                const imageX = totalPadding;
+                const imageY = totalPadding;
+                const imageWidth = this.originalImage.width;
+                const imageHeight = this.originalImage.height;
+
+                // Create outer rounded rectangle path for background
+                downloadCtx.beginPath();
+                downloadCtx.moveTo(outerX + cornerRadius, outerY);
+                downloadCtx.lineTo(outerX + outerWidth - cornerRadius, outerY);
+                downloadCtx.quadraticCurveTo(outerX + outerWidth, outerY, outerX + outerWidth, outerY + cornerRadius);
+                downloadCtx.lineTo(outerX + outerWidth, outerY + outerHeight - cornerRadius);
+                downloadCtx.quadraticCurveTo(outerX + outerWidth, outerY + outerHeight, outerX + outerWidth - cornerRadius, outerY + outerHeight);
+                downloadCtx.lineTo(outerX + cornerRadius, outerY + outerHeight);
+                downloadCtx.quadraticCurveTo(outerX, outerY + outerHeight, outerX, outerY + outerHeight - cornerRadius);
+                downloadCtx.lineTo(outerX, outerY + cornerRadius);
+                downloadCtx.quadraticCurveTo(outerX, outerY, outerX + cornerRadius, outerY);
+                downloadCtx.closePath();
+
+                // Fill background
+                downloadCtx.fillStyle = bgColor;
+                downloadCtx.fill();
+
+                // Add stroke (outside the image area)
+                if (strokeWidth > 0) {
+                    downloadCtx.strokeStyle = strokeColor;
+                    downloadCtx.lineWidth = strokeWidth;
+                    downloadCtx.stroke();
+                }
+
+                // Draw image directly without clipping (rectangular)
+                downloadCtx.drawImage(this.originalImage, imageX, imageY, imageWidth, imageHeight);
+
+                // Download
+                downloadCanvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'laptop-sticker.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }, 'image/png', 1.0);
+            }
+        }
+
+        // Initialize the app
+        new StickerMaker();
+    </script>
+</body>
+</html>
