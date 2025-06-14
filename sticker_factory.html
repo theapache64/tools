@@ -249,7 +249,24 @@
                 <div class="control-section">
                     <h5 class="section-title">Customize Your Sticker</h5>
                     
-                    <div class="row g-4">
+                    <!-- Shape Selection -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Sticker Type</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="stickerType" id="rectangleType" value="rectangle" checked>
+                                <label class="btn btn-outline-dark" for="rectangleType">📄 Rectangle Sticker</label>
+                                
+                                <input type="radio" class="btn-check" name="stickerType" id="outlineType" value="outline">
+                                <label class="btn btn-outline-dark" for="outlineType">✂️ Outline Sticker</label>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                <span id="typeDescription">Rectangle sticker with background and customizable border</span>
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-4" id="rectangleControls">
                         <div class="col-md-6 col-lg-3">
                             <label class="form-label fw-semibold">Background Color</label>
                             <div class="color-input-wrapper">
@@ -282,6 +299,37 @@
                             <label class="form-label fw-semibold">Corner Radius</label>
                             <input type="range" id="cornerRadius" class="form-range" min="0" max="250" value="15">
                             <div class="slider-value" id="cornerRadiusValue">15px</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 d-none" id="outlineControls">
+                        <div class="col-md-6 col-lg-4">
+                            <label class="form-label fw-semibold">Outline Color</label>
+                            <div class="color-input-wrapper">
+                                <input type="color" id="outlineColor" class="color-input" value="#ffffff">
+                                <span class="color-value" id="outlineColorValue">#ffffff</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-4">
+                            <label class="form-label fw-semibold">Outline Width</label>
+                            <input type="range" id="outlineWidth" class="form-range" min="5" max="100" value="30">
+                            <div class="slider-value" id="outlineWidthValue">30px</div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-4">
+                            <label class="form-label fw-semibold">Padding</label>
+                            <input type="range" id="outlinePadding" class="form-range" min="0" max="100" value="20">
+                            <div class="slider-value" id="outlinePaddingValue">20px</div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fillHoles" checked>
+                                <label class="form-check-label" for="fillHoles">
+                                    Fill holes in the outline
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -320,12 +368,15 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/@devadri/create-sticker@1.1.0/bundle.iife.js"></script>
     <script>
         class StickerMaker {
             constructor() {
                 this.canvas = document.getElementById('canvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.originalImage = null;
+                this.currentStickerType = 'rectangle';
+                this.outlineCanvas = null;
                 this.setupEventListeners();
             }
 
@@ -339,6 +390,16 @@
                 const cornerRadius = document.getElementById('cornerRadius');
                 const downloadBtn = document.getElementById('downloadBtn');
 
+                // Outline controls
+                const outlineColor = document.getElementById('outlineColor');
+                const outlineWidth = document.getElementById('outlineWidth');
+                const outlinePadding = document.getElementById('outlinePadding');
+                const fillHoles = document.getElementById('fillHoles');
+
+                // Sticker type selection
+                const rectangleType = document.getElementById('rectangleType');
+                const outlineType = document.getElementById('outlineType');
+
                 // File upload
                 uploadArea.addEventListener('click', () => fileInput.click());
                 uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
@@ -346,12 +407,22 @@
                 uploadArea.addEventListener('drop', this.handleDrop.bind(this));
                 fileInput.addEventListener('change', this.handleFileSelect.bind(this));
 
-                // Controls
+                // Sticker type change
+                rectangleType.addEventListener('change', this.handleStickerTypeChange.bind(this));
+                outlineType.addEventListener('change', this.handleStickerTypeChange.bind(this));
+
+                // Rectangle controls
                 bgColor.addEventListener('input', this.updatePreview.bind(this));
                 strokeColor.addEventListener('input', this.updatePreview.bind(this));
                 padding.addEventListener('input', this.updatePreview.bind(this));
                 strokeWidth.addEventListener('input', this.updatePreview.bind(this));
                 cornerRadius.addEventListener('input', this.updatePreview.bind(this));
+
+                // Outline controls
+                outlineColor.addEventListener('input', this.updatePreview.bind(this));
+                outlineWidth.addEventListener('input', this.updatePreview.bind(this));
+                outlinePadding.addEventListener('input', this.updatePreview.bind(this));
+                fillHoles.addEventListener('change', this.updatePreview.bind(this));
 
                 // Color value display
                 bgColor.addEventListener('input', () => {
@@ -359,6 +430,9 @@
                 });
                 strokeColor.addEventListener('input', () => {
                     document.getElementById('strokeColorValue').textContent = strokeColor.value;
+                });
+                outlineColor.addEventListener('input', () => {
+                    document.getElementById('outlineColorValue').textContent = outlineColor.value;
                 });
 
                 // Slider value display
@@ -371,9 +445,39 @@
                 cornerRadius.addEventListener('input', () => {
                     document.getElementById('cornerRadiusValue').textContent = cornerRadius.value + 'px';
                 });
+                outlineWidth.addEventListener('input', () => {
+                    document.getElementById('outlineWidthValue').textContent = outlineWidth.value + 'px';
+                });
+                outlinePadding.addEventListener('input', () => {
+                    document.getElementById('outlinePaddingValue').textContent = outlinePadding.value + 'px';
+                });
 
                 // Download
                 downloadBtn.addEventListener('click', this.downloadSticker.bind(this));
+            }
+
+            handleStickerTypeChange() {
+                const rectangleType = document.getElementById('rectangleType');
+                const outlineType = document.getElementById('outlineType');
+                const rectangleControls = document.getElementById('rectangleControls');
+                const outlineControls = document.getElementById('outlineControls');
+                const typeDescription = document.getElementById('typeDescription');
+
+                if (rectangleType.checked) {
+                    this.currentStickerType = 'rectangle';
+                    rectangleControls.classList.remove('d-none');
+                    outlineControls.classList.add('d-none');
+                    typeDescription.textContent = 'Rectangle sticker with background and customizable border';
+                } else if (outlineType.checked) {
+                    this.currentStickerType = 'outline';
+                    rectangleControls.classList.add('d-none');
+                    outlineControls.classList.remove('d-none');
+                    typeDescription.textContent = 'Outline sticker that follows the shape of your image';
+                }
+
+                if (this.originalImage) {
+                    this.updatePreview();
+                }
             }
 
             handleDragOver(e) {
@@ -431,6 +535,14 @@
             updatePreview() {
                 if (!this.originalImage) return;
 
+                if (this.currentStickerType === 'rectangle') {
+                    this.updateRectanglePreview();
+                } else if (this.currentStickerType === 'outline') {
+                    this.updateOutlinePreview();
+                }
+            }
+
+            updateRectanglePreview() {
                 const bgColor = document.getElementById('bgColor').value;
                 const strokeColor = document.getElementById('strokeColor').value;
                 const paddingValue = parseInt(document.getElementById('padding').value);
@@ -446,35 +558,8 @@
                 this.canvas.width = canvasWidth;
                 this.canvas.height = canvasHeight;
 
-                // Calculate display size while maintaining aspect ratio (increased max size)
-                const maxDisplayWidth = 500;
-                const maxDisplayHeight = 350;
-                const aspectRatio = canvasWidth / canvasHeight;
-                
-                let displayWidth, displayHeight;
-                
-                if (aspectRatio > maxDisplayWidth / maxDisplayHeight) {
-                    displayWidth = Math.min(maxDisplayWidth, canvasWidth);
-                    displayHeight = displayWidth / aspectRatio;
-                } else {
-                    displayHeight = Math.min(maxDisplayHeight, canvasHeight);
-                    displayWidth = displayHeight * aspectRatio;
-                }
-
-                // Scale up the display if it's too small
-                const minDisplaySize = 200;
-                if (displayWidth < minDisplaySize && displayHeight < minDisplaySize) {
-                    if (displayWidth < displayHeight) {
-                        displayWidth = minDisplaySize;
-                        displayHeight = minDisplaySize / aspectRatio;
-                    } else {
-                        displayHeight = minDisplaySize;
-                        displayWidth = minDisplaySize * aspectRatio;
-                    }
-                }
-
-                this.canvas.style.width = displayWidth + 'px';
-                this.canvas.style.height = displayHeight + 'px';
+                // Calculate display size while maintaining aspect ratio
+                this.setCanvasDisplaySize(canvasWidth, canvasHeight);
 
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
@@ -522,9 +607,106 @@
                 this.ctx.drawImage(this.originalImage, imageX, imageY, imageWidth, imageHeight);
             }
 
+            async updateOutlinePreview() {
+                try {
+                    const outlineColor = document.getElementById('outlineColor').value;
+                    const outlineWidth = parseInt(document.getElementById('outlineWidth').value);
+                    const outlinePadding = parseInt(document.getElementById('outlinePadding').value);
+                    const fillHoles = document.getElementById('fillHoles').checked;
+
+                    // Convert image to data URL
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = this.originalImage.width;
+                    tempCanvas.height = this.originalImage.height;
+                    tempCtx.drawImage(this.originalImage, 0, 0);
+                    const imageDataUrl = tempCanvas.toDataURL();
+
+                    // Use CreateSticker library to generate outline
+                    const stickerDataUrl = await CreateSticker.createSticker(imageDataUrl, {
+                        strokeWidth: outlineWidth,
+                        strokeColor: outlineColor,
+                        padding: outlinePadding,
+                        fillHoles: fillHoles
+                    });
+
+                    // Create image from the sticker data URL
+                    const stickerImg = new Image();
+                    stickerImg.onload = () => {
+                        // Set canvas size to match the sticker
+                        this.canvas.width = stickerImg.width;
+                        this.canvas.height = stickerImg.height;
+
+                        // Calculate display size
+                        this.setCanvasDisplaySize(stickerImg.width, stickerImg.height);
+
+                        // Clear and draw the sticker
+                        this.ctx.clearRect(0, 0, stickerImg.width, stickerImg.height);
+                        this.ctx.drawImage(stickerImg, 0, 0);
+
+                        // Store the sticker image for download
+                        this.outlineCanvas = document.createElement('canvas');
+                        this.outlineCanvas.width = stickerImg.width;
+                        this.outlineCanvas.height = stickerImg.height;
+                        const outlineCtx = this.outlineCanvas.getContext('2d');
+                        outlineCtx.drawImage(stickerImg, 0, 0);
+                    };
+                    stickerImg.src = stickerDataUrl;
+
+                } catch (error) {
+                    console.error('Error creating outline sticker:', error);
+                    // Fallback to showing original image
+                    this.canvas.width = this.originalImage.width;
+                    this.canvas.height = this.originalImage.height;
+                    this.setCanvasDisplaySize(this.originalImage.width, this.originalImage.height);
+                    this.ctx.clearRect(0, 0, this.originalImage.width, this.originalImage.height);
+                    this.ctx.drawImage(this.originalImage, 0, 0);
+                }
+            }
+
+            setCanvasDisplaySize(canvasWidth, canvasHeight) {
+                // Calculate display size while maintaining aspect ratio (increased max size)
+                const maxDisplayWidth = 500;
+                const maxDisplayHeight = 350;
+                const aspectRatio = canvasWidth / canvasHeight;
+                
+                let displayWidth, displayHeight;
+                
+                if (aspectRatio > maxDisplayWidth / maxDisplayHeight) {
+                    displayWidth = Math.min(maxDisplayWidth, canvasWidth);
+                    displayHeight = displayWidth / aspectRatio;
+                } else {
+                    displayHeight = Math.min(maxDisplayHeight, canvasHeight);
+                    displayWidth = displayHeight * aspectRatio;
+                }
+
+                // Scale up the display if it's too small
+                const minDisplaySize = 200;
+                if (displayWidth < minDisplaySize && displayHeight < minDisplaySize) {
+                    if (displayWidth < displayHeight) {
+                        displayWidth = minDisplaySize;
+                        displayHeight = minDisplaySize / aspectRatio;
+                    } else {
+                        displayHeight = minDisplaySize;
+                        displayWidth = minDisplaySize * aspectRatio;
+                    }
+                }
+
+                this.canvas.style.width = displayWidth + 'px';
+                this.canvas.style.height = displayHeight + 'px';
+            }
+
             downloadSticker() {
                 if (!this.originalImage) return;
 
+                if (this.currentStickerType === 'rectangle') {
+                    this.downloadRectangleSticker();
+                } else if (this.currentStickerType === 'outline') {
+                    this.downloadOutlineSticker();
+                }
+            }
+
+            downloadRectangleSticker() {
                 // Create a high-resolution canvas for download
                 const downloadCanvas = document.createElement('canvas');
                 const downloadCtx = downloadCanvas.getContext('2d');
@@ -587,10 +769,45 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'laptop-sticker.png';
+                    a.download = 'rectangle-sticker.png';
                     a.click();
                     URL.revokeObjectURL(url);
                 }, 'image/png', 1.0);
+            }
+
+            async downloadOutlineSticker() {
+                try {
+                    const outlineColor = document.getElementById('outlineColor').value;
+                    const outlineWidth = parseInt(document.getElementById('outlineWidth').value);
+                    const outlinePadding = parseInt(document.getElementById('outlinePadding').value);
+                    const fillHoles = document.getElementById('fillHoles').checked;
+
+                    // Convert image to data URL
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = this.originalImage.width;
+                    tempCanvas.height = this.originalImage.height;
+                    tempCtx.drawImage(this.originalImage, 0, 0);
+                    const imageDataUrl = tempCanvas.toDataURL();
+
+                    // Use CreateSticker library to generate high-quality outline
+                    const stickerDataUrl = await CreateSticker.createSticker(imageDataUrl, {
+                        strokeWidth: outlineWidth,
+                        strokeColor: outlineColor,
+                        padding: outlinePadding,
+                        fillHoles: fillHoles
+                    });
+
+                    // Download the generated sticker
+                    const a = document.createElement('a');
+                    a.href = stickerDataUrl;
+                    a.download = 'outline-sticker.png';
+                    a.click();
+
+                } catch (error) {
+                    console.error('Error downloading outline sticker:', error);
+                    alert('Error generating outline sticker. Please try again.');
+                }
             }
         }
 
