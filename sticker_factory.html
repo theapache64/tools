@@ -202,6 +202,69 @@
             color: var(--primary-color);
         }
 
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background-color: white;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .loading-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-subtext {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 1.5rem 0;
@@ -367,6 +430,18 @@
         </div>
     </div>
 
+    <!-- Loading Overlay -->
+    <div class="loading-overlay d-none" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loadingText">Processing your image...</div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingProgressBar"></div>
+            </div>
+            <div class="loading-subtext" id="loadingSubtext">This may take a few moments</div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/@devadri/create-sticker@1.1.0/bundle.iife.js"></script>
     <script>
@@ -377,6 +452,8 @@
                 this.originalImage = null;
                 this.currentStickerType = 'rectangle';
                 this.outlineCanvas = null;
+                this.isProcessing = false;
+                this.debounceTimer = null;
                 this.setupEventListeners();
             }
 
@@ -419,10 +496,10 @@
                 cornerRadius.addEventListener('input', this.updatePreview.bind(this));
 
                 // Outline controls
-                outlineColor.addEventListener('input', this.updatePreview.bind(this));
-                outlineWidth.addEventListener('input', this.updatePreview.bind(this));
-                outlinePadding.addEventListener('input', this.updatePreview.bind(this));
-                fillHoles.addEventListener('change', this.updatePreview.bind(this));
+                outlineColor.addEventListener('input', this.debouncedUpdatePreview.bind(this));
+                outlineWidth.addEventListener('input', this.debouncedUpdatePreview.bind(this));
+                outlinePadding.addEventListener('input', this.debouncedUpdatePreview.bind(this));
+                fillHoles.addEventListener('change', this.debouncedUpdatePreview.bind(this));
 
                 // Color value display
                 bgColor.addEventListener('input', () => {
@@ -476,6 +553,23 @@
                 }
 
                 if (this.originalImage) {
+                    this.updatePreview();
+                }
+            }
+
+            debouncedUpdatePreview() {
+                // Clear existing timer
+                if (this.debounceTimer) {
+                    clearTimeout(this.debounceTimer);
+                }
+                
+                // Only debounce outline updates to prevent excessive processing
+                if (this.currentStickerType === 'outline') {
+                    this.debounceTimer = setTimeout(() => {
+                        this.updatePreview();
+                    }, 800); // Wait 800ms after user stops adjusting
+                } else {
+                    // Rectangle updates are fast, no need to debounce
                     this.updatePreview();
                 }
             }
@@ -608,11 +702,20 @@
             }
 
             async updateOutlinePreview() {
+                if (this.isProcessing) return;
+                
                 try {
+                    this.isProcessing = true;
+                    this.showLoading('Generating preview...', 'Creating outline sticker preview');
+                    
                     const outlineColor = document.getElementById('outlineColor').value;
                     const outlineWidth = parseInt(document.getElementById('outlineWidth').value);
                     const outlinePadding = parseInt(document.getElementById('outlinePadding').value);
                     const fillHoles = document.getElementById('fillHoles').checked;
+
+                    // Simulate progress
+                    this.updateProgress(20);
+                    await this.delay(100);
 
                     // Convert image to data URL
                     const tempCanvas = document.createElement('canvas');
@@ -622,6 +725,9 @@
                     tempCtx.drawImage(this.originalImage, 0, 0);
                     const imageDataUrl = tempCanvas.toDataURL();
 
+                    this.updateProgress(40);
+                    await this.delay(100);
+
                     // Use CreateSticker library to generate outline
                     const stickerDataUrl = await CreateSticker.createSticker(imageDataUrl, {
                         strokeWidth: outlineWidth,
@@ -629,6 +735,9 @@
                         padding: outlinePadding,
                         fillHoles: fillHoles
                     });
+
+                    this.updateProgress(80);
+                    await this.delay(100);
 
                     // Create image from the sticker data URL
                     const stickerImg = new Image();
@@ -650,11 +759,20 @@
                         this.outlineCanvas.height = stickerImg.height;
                         const outlineCtx = this.outlineCanvas.getContext('2d');
                         outlineCtx.drawImage(stickerImg, 0, 0);
+
+                        this.updateProgress(100);
+                        setTimeout(() => {
+                            this.hideLoading();
+                            this.isProcessing = false;
+                        }, 200);
                     };
                     stickerImg.src = stickerDataUrl;
 
                 } catch (error) {
                     console.error('Error creating outline sticker:', error);
+                    this.hideLoading();
+                    this.isProcessing = false;
+                    
                     // Fallback to showing original image
                     this.canvas.width = this.originalImage.width;
                     this.canvas.height = this.originalImage.height;
@@ -776,11 +894,19 @@
             }
 
             async downloadOutlineSticker() {
+                if (this.isProcessing) return;
+                
                 try {
+                    this.isProcessing = true;
+                    this.showLoading('Preparing download...', 'Generating high-quality sticker');
+                    
                     const outlineColor = document.getElementById('outlineColor').value;
                     const outlineWidth = parseInt(document.getElementById('outlineWidth').value);
                     const outlinePadding = parseInt(document.getElementById('outlinePadding').value);
                     const fillHoles = document.getElementById('fillHoles').checked;
+
+                    this.updateProgress(20);
+                    await this.delay(100);
 
                     // Convert image to data URL
                     const tempCanvas = document.createElement('canvas');
@@ -790,6 +916,9 @@
                     tempCtx.drawImage(this.originalImage, 0, 0);
                     const imageDataUrl = tempCanvas.toDataURL();
 
+                    this.updateProgress(40);
+                    await this.delay(100);
+
                     // Use CreateSticker library to generate high-quality outline
                     const stickerDataUrl = await CreateSticker.createSticker(imageDataUrl, {
                         strokeWidth: outlineWidth,
@@ -798,16 +927,59 @@
                         fillHoles: fillHoles
                     });
 
+                    this.updateProgress(80);
+                    await this.delay(100);
+
                     // Download the generated sticker
                     const a = document.createElement('a');
                     a.href = stickerDataUrl;
                     a.download = 'outline-sticker.png';
                     a.click();
 
+                    this.updateProgress(100);
+                    setTimeout(() => {
+                        this.hideLoading();
+                        this.isProcessing = false;
+                    }, 500);
+
                 } catch (error) {
                     console.error('Error downloading outline sticker:', error);
+                    this.hideLoading();
+                    this.isProcessing = false;
                     alert('Error generating outline sticker. Please try again.');
                 }
+            }
+
+            showLoading(text = 'Processing...', subtext = 'Please wait') {
+                const overlay = document.getElementById('loadingOverlay');
+                const loadingText = document.getElementById('loadingText');
+                const loadingSubtext = document.getElementById('loadingSubtext');
+                const progressBar = document.getElementById('loadingProgressBar');
+                
+                loadingText.textContent = text;
+                loadingSubtext.textContent = subtext;
+                progressBar.style.width = '0%';
+                overlay.classList.remove('d-none');
+                
+                // Prevent scrolling
+                document.body.style.overflow = 'hidden';
+            }
+
+            hideLoading() {
+                const overlay = document.getElementById('loadingOverlay');
+                overlay.classList.add('d-none');
+                
+                // Restore scrolling
+                document.body.style.overflow = '';
+            }
+
+            updateProgress(percentage) {
+                const progressBar = document.getElementById('loadingProgressBar');
+                progressBar.style.width = percentage + '%';
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
             }
         }
 
