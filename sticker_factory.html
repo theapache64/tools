@@ -403,6 +403,23 @@
         <!-- Preview Section -->
         <div class="row">
             <div class="col-12">
+                <div class="mb-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="section-title mb-0">Preview</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="form-label mb-0 fw-semibold small">Background:</label>
+                                <div class="color-input-wrapper" style="padding: 0.25rem; min-width: 120px;">
+                                    <input type="color" id="previewBgColor" class="color-input" value="#f8f9fa" style="width: 30px; height: 30px;">
+                                    <span class="color-value" id="previewBgColorValue" style="font-size: 0.8rem;">#f8f9fa</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <small class="text-muted">Preview background (not included in downloaded sticker)</small>
+                </div>
                 <div class="preview-area mb-4" id="previewArea">
                     <canvas id="canvas" class="preview-canvas d-none"></canvas>
                     <div class="placeholder-content" id="placeholder">
@@ -468,6 +485,9 @@
                 const cornerRadius = document.getElementById('cornerRadius');
                 const downloadBtn = document.getElementById('downloadBtn');
 
+                // Preview background control
+                const previewBgColor = document.getElementById('previewBgColor');
+
                 // Outline controls
                 const outlineColor = document.getElementById('outlineColor');
                 const outlineWidth = document.getElementById('outlineWidth');
@@ -496,6 +516,9 @@
                 strokeWidth.addEventListener('input', this.updatePreview.bind(this));
                 cornerRadius.addEventListener('input', this.updatePreview.bind(this));
 
+                // Preview background control
+                previewBgColor.addEventListener('input', this.updatePreviewBackground.bind(this));
+
                 // Outline controls
                 outlineColor.addEventListener('input', this.debouncedUpdatePreview.bind(this));
                 outlineWidth.addEventListener('input', this.debouncedUpdatePreview.bind(this));
@@ -511,6 +534,9 @@
                 });
                 outlineColor.addEventListener('input', () => {
                     document.getElementById('outlineColorValue').textContent = outlineColor.value;
+                });
+                previewBgColor.addEventListener('input', () => {
+                    document.getElementById('previewBgColorValue').textContent = previewBgColor.value;
                 });
 
                 // Slider value display
@@ -556,6 +582,12 @@
                 if (this.originalImage) {
                     this.updatePreview();
                 }
+            }
+
+            updatePreviewBackground() {
+                const previewArea = document.getElementById('previewArea');
+                const previewBgColor = document.getElementById('previewBgColor').value;
+                previewArea.style.backgroundColor = previewBgColor;
             }
 
             debouncedUpdatePreview() {
@@ -614,6 +646,7 @@
                         this.originalImage = img;
                         this.showControls();
                         this.updatePreview();
+                        this.updatePreviewBackground();
                     };
                     img.src = e.target.result;
                 };
