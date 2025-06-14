@@ -742,6 +742,9 @@
                     this.isProcessing = true;
                     this.showLoading('Generating preview...', 'Creating outline sticker preview');
                     
+                    // Clear any cached outline canvas since settings changed
+                    this.outlineCanvas = null;
+                    
                     const outlineColor = document.getElementById('outlineColor').value;
                     const outlineWidth = parseInt(document.getElementById('outlineWidth').value);
                     const outlinePadding = parseInt(document.getElementById('outlinePadding').value);
@@ -940,6 +943,20 @@
             async downloadOutlineSticker() {
                 if (this.isProcessing) return;
                 
+                // If we have a cached outline canvas from preview, use it directly
+                if (this.outlineCanvas) {
+                    this.outlineCanvas.toBlob((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'outline-sticker.png';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }, 'image/png', 1.0);
+                    return;
+                }
+                
+                // Fallback: generate new outline if no cached version exists
                 try {
                     this.isProcessing = true;
                     this.showLoading('Preparing download...', 'Generating high-quality sticker');
