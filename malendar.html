@@ -304,23 +304,6 @@
             color: hsl(var(--muted-foreground));
         }
 
-        .url-display {
-            display: flex;
-            gap: 0.5rem;
-            flex: 2;
-        }
-
-        .url-input {
-            flex: 1;
-            padding: 0.5rem;
-            border: 1px solid hsl(var(--border));
-            border-radius: var(--radius);
-            background-color: hsl(var(--background));
-            color: hsl(var(--foreground));
-            font-size: 0.875rem;
-            font-family: monospace;
-        }
-
         .copy-btn {
             padding: 0.5rem 1rem;
             border: 1px solid hsl(var(--border));
@@ -354,10 +337,6 @@
             .share-section {
                 flex-direction: column;
                 align-items: stretch;
-            }
-
-            .url-display {
-                flex: 1;
             }
         }
 
@@ -461,12 +440,9 @@
             <div class="share-section">
                 <div class="share-info">
                     <h3>Share Your Calendar</h3>
-                    <p>Your events are automatically saved in the URL</p>
+                    <p>Your events are automatically saved in the URL - copy the current URL to share your calendar</p>
                 </div>
-                <div class="url-display">
-                    <input type="text" id="shareUrl" class="url-input" readonly>
-                    <button id="copyBtn" class="copy-btn">Copy</button>
-                </div>
+                <button id="copyBtn" class="copy-btn">Copy Current URL</button>
             </div>
         </div>
 
@@ -534,17 +510,21 @@
                 });
 
                 document.getElementById('copyBtn').addEventListener('click', async () => {
-                    const urlInput = document.getElementById('shareUrl');
+                    const currentUrl = window.location.href;
                     
                     try {
                         // Try modern clipboard API first
                         if (navigator.clipboard && window.isSecureContext) {
-                            await navigator.clipboard.writeText(urlInput.value);
+                            await navigator.clipboard.writeText(currentUrl);
                         } else {
-                            // Fallback to older method
-                            urlInput.select();
-                            urlInput.setSelectionRange(0, 99999); // For mobile devices
+                            // Fallback: create temporary input for copy
+                            const tempInput = document.createElement('input');
+                            tempInput.value = currentUrl;
+                            document.body.appendChild(tempInput);
+                            tempInput.select();
+                            tempInput.setSelectionRange(0, 99999);
                             document.execCommand('copy');
+                            document.body.removeChild(tempInput);
                         }
                         
                         const btn = document.getElementById('copyBtn');
@@ -555,8 +535,13 @@
                         }, 2000);
                     } catch (err) {
                         console.error('Failed to copy: ', err);
-                        // Fallback: select the text for manual copy
-                        urlInput.select();
+                        // Show error feedback
+                        const btn = document.getElementById('copyBtn');
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Copy failed';
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 2000);
                     }
                 });
             }
@@ -996,7 +981,9 @@
                 
                 const encodedData = encodeURIComponent(JSON.stringify(eventsObj));
                 const url = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
-                document.getElementById('shareUrl').value = url;
+                
+                // Update the browser URL without reloading the page
+                window.history.replaceState(null, '', url);
             }
 
             loadFromUrl() {
