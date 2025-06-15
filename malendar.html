@@ -316,7 +316,7 @@
             <textarea 
                 id="milestoneText" 
                 class="textarea" 
-placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kickoff meeting - June 16&#10;- Design phase complete - June 20th&#10;- Development sprint 1 - 25th June&#10;- Code review session - 1st&#10;- Final testing - July 10&#10;- Project delivery - 15th July"
+placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kickoff meeting - June 16&#10;- Design phase complete - June 17&#10;- Development sprint 1 - June 20&#10;- Code review session - June 25&#10;- Final testing - July 10&#10;- Project delivery - 15th July"
             ></textarea>
 
             <div class="example-text">
@@ -326,6 +326,7 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                 • Month DDth (June 16th) - uses current year<br>
                 • DDth Month (16th June) - uses current year<br>
                 • DDth (16th) - uses current month and year<br>
+                • Natural language (tomorrow, next Monday, in 2 weeks)<br>
                 <br>
                 <strong>Priority markers:</strong><br>
                 • Add [HIGH] for high priority (red)<br>
@@ -334,8 +335,9 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                 <br>
                 <strong>Example:</strong><br>
                 • Project kickoff - June 20, 2025<br>
-                • Design review [HIGH] - 21st June<br>
-                • Testing phase [MEDIUM] - 30th<br>
+                • Design review [HIGH] - tomorrow<br>
+                • Testing phase [MEDIUM] - next Friday<br>
+                • Deployment - in 2 weeks<br>
             </div>
 
             <div class="share-section">
@@ -371,6 +373,7 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                 this.currentDate = new Date();
                 this.currentDate.setDate(1); // Set to first day of month
                 this.milestones = [];
+                this.today = new Date(); // Keep reference to actual today
                 this.init();
             }
 
@@ -541,15 +544,24 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                     text = text.replace(/\[MEDIUM\]/gi, '').trim();
                 }
 
-                // Date patterns - support all date formats
+                // Date patterns - support all date formats, ordered by specificity to avoid conflicts
                 const datePatterns = [
+                    // Explicit date formats first (most specific)
                     /(\w+ \d{1,2},? \d{4})/,                    // Month DD, YYYY
                     /(\d{1,2}(?:st|nd|rd|th) \w+,? \d{4})/,     // DDth Month, YYYY
                     /(\w+ \d{1,2}(?:st|nd|rd|th),? \d{4})/,     // Month DDth, YYYY
-                    /(\w+ \d{1,2})(?![,\s]*\d{4})/,             // Month DD (without year)
+                    
+                    // Date formats without year (medium specificity)
                     /(\w+ \d{1,2}(?:st|nd|rd|th))(?![,\s]*\d{4})/, // Month DDth (without year)
                     /(\d{1,2}(?:st|nd|rd|th) \w+)(?![,\s]*\d{4})/, // DDth Month (without year)
+                    /(\w+ \d{1,2})(?![,\s]*\d{4})(?!\s*(?:st|nd|rd|th))/,  // Month DD (without year, not followed by ordinal)
                     /(\d{1,2}(?:st|nd|rd|th))(?!\s+\w)/,        // DDth only
+                    
+                    // Natural language patterns (least specific, checked last)
+                    /\b(tomorrow|today|yesterday)\b/i,          // Relative days (word boundary)
+                    /\b(next|this)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i, // Next/this weekday
+                    /\b(in\s+\d+\s+(?:day|days|week|weeks|month|months))\b/i, // In X days/weeks/months
+                    /\b(\d+\s+(?:day|days|week|weeks|month|months)\s+(?:from\s+now|later))\b/i, // X days from now
                 ];
 
                 let dateMatch = null;
@@ -603,25 +615,12 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                 const currentYear = currentDate.getFullYear();
                 const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long' });
                 
-                // Handle "Month DDth" format (e.g., "June 16th") - use current year
-                if (/^\w+ \d{1,2}(st|nd|rd|th)$/.test(dateStr.trim())) {
-                    const monthOrdinalMatch = dateStr.match(/^(\w+) (\d{1,2})(st|nd|rd|th)$/);
-                    if (monthOrdinalMatch) {
-                        const month = monthOrdinalMatch[1];
-                        const day = monthOrdinalMatch[2];
-                        const fullDateStr = `${month} ${day}, ${currentYear}`;
-                        const date = new Date(fullDateStr);
-                        console.log('Month DDth with current year:', date);
-                        
-                        if (!isNaN(date)) {
-                            return date;
-                        }
-                    }
-                }
+                // Clean up the date string
+                const cleanDateStr = dateStr.trim();
                 
                 // Handle "Month DDth, YYYY" format (e.g., "June 16th, 2025")
-                if (/^\w+ \d{1,2}(st|nd|rd|th),? \d{4}$/.test(dateStr.trim())) {
-                    const monthOrdinalMatch = dateStr.match(/^(\w+) (\d{1,2})(st|nd|rd|th),? (\d{4})$/);
+                if (/^\w+ \d{1,2}(st|nd|rd|th),?\s+\d{4}$/.test(cleanDateStr)) {
+                    const monthOrdinalMatch = cleanDateStr.match(/^(\w+) (\d{1,2})(st|nd|rd|th),?\s+(\d{4})$/);
                     if (monthOrdinalMatch) {
                         const month = monthOrdinalMatch[1];
                         const day = monthOrdinalMatch[2];
@@ -636,37 +635,9 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                     }
                 }
                 
-                // Handle "DDth" format only (e.g., "16th") - use current month and year
-                if (/^\d{1,2}(st|nd|rd|th)$/.test(dateStr.trim())) {
-                    const dayNum = parseInt(dateStr.replace(/[^\d]/g, ''));
-                    const fullDateStr = `${currentMonth} ${dayNum}, ${currentYear}`;
-                    const date = new Date(fullDateStr);
-                    console.log('DDth with current month/year:', date);
-                    
-                    if (!isNaN(date)) {
-                        return date;
-                    }
-                }
-                
-                // Handle "DDth Month" format (e.g., "16th June") - use current year
-                if (/^\d{1,2}(st|nd|rd|th) \w+$/.test(dateStr.trim())) {
-                    const ordinalMatch = dateStr.match(/^(\d{1,2})(st|nd|rd|th) (\w+)$/);
-                    if (ordinalMatch) {
-                        const day = ordinalMatch[1];
-                        const month = ordinalMatch[3];
-                        const fullDateStr = `${month} ${day}, ${currentYear}`;
-                        const date = new Date(fullDateStr);
-                        console.log('DDth Month with current year:', date);
-                        
-                        if (!isNaN(date)) {
-                            return date;
-                        }
-                    }
-                }
-                
                 // Handle "DDth Month, YYYY" format (e.g., "16th June, 2025")
-                if (/^\d{1,2}(st|nd|rd|th) \w+,? \d{4}$/.test(dateStr.trim())) {
-                    const ordinalMatch = dateStr.match(/^(\d{1,2})(st|nd|rd|th) (\w+),? (\d{4})$/);
+                if (/^\d{1,2}(st|nd|rd|th) \w+,?\s+\d{4}$/.test(cleanDateStr)) {
+                    const ordinalMatch = cleanDateStr.match(/^(\d{1,2})(st|nd|rd|th) (\w+),?\s+(\d{4})$/);
                     if (ordinalMatch) {
                         const day = ordinalMatch[1];
                         const month = ordinalMatch[3];
@@ -681,9 +652,50 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                     }
                 }
                 
+                // Handle "Month DD, YYYY" format (standard format)
+                if (/^\w+ \d{1,2},?\s+\d{4}$/.test(cleanDateStr)) {
+                    let date = new Date(cleanDateStr);
+                    if (!isNaN(date)) {
+                        console.log('Month DD, YYYY:', date);
+                        return date;
+                    }
+                }
+                
+                // Handle "Month DDth" format (e.g., "June 16th") - use current year
+                if (/^\w+ \d{1,2}(st|nd|rd|th)$/.test(cleanDateStr)) {
+                    const monthOrdinalMatch = cleanDateStr.match(/^(\w+) (\d{1,2})(st|nd|rd|th)$/);
+                    if (monthOrdinalMatch) {
+                        const month = monthOrdinalMatch[1];
+                        const day = monthOrdinalMatch[2];
+                        const fullDateStr = `${month} ${day}, ${currentYear}`;
+                        const date = new Date(fullDateStr);
+                        console.log('Month DDth with current year:', date);
+                        
+                        if (!isNaN(date)) {
+                            return date;
+                        }
+                    }
+                }
+                
+                // Handle "DDth Month" format (e.g., "16th June") - use current year
+                if (/^\d{1,2}(st|nd|rd|th) \w+$/.test(cleanDateStr)) {
+                    const ordinalMatch = cleanDateStr.match(/^(\d{1,2})(st|nd|rd|th) (\w+)$/);
+                    if (ordinalMatch) {
+                        const day = ordinalMatch[1];
+                        const month = ordinalMatch[3];
+                        const fullDateStr = `${month} ${day}, ${currentYear}`;
+                        const date = new Date(fullDateStr);
+                        console.log('DDth Month with current year:', date);
+                        
+                        if (!isNaN(date)) {
+                            return date;
+                        }
+                    }
+                }
+                
                 // Handle "Month DD" format without year - always use current year
-                if (/^\w+ \d{1,2}$/.test(dateStr.trim())) {
-                    const dateWithCurrentYear = new Date(dateStr + ', ' + currentYear);
+                if (/^\w+ \d{1,2}$/.test(cleanDateStr)) {
+                    const dateWithCurrentYear = new Date(cleanDateStr + ', ' + currentYear);
                     console.log('Month DD with current year:', dateWithCurrentYear);
                     
                     if (!isNaN(dateWithCurrentYear)) {
@@ -691,13 +703,147 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                     }
                 }
                 
-                // Handle "Month DD, YYYY" format
-                let date = new Date(dateStr);
+                // Handle "DDth" format only (e.g., "16th") - use current month and year
+                if (/^\d{1,2}(st|nd|rd|th)$/.test(cleanDateStr)) {
+                    const dayNum = parseInt(cleanDateStr.replace(/[^\d]/g, ''));
+                    const fullDateStr = `${currentMonth} ${dayNum}, ${currentYear}`;
+                    const date = new Date(fullDateStr);
+                    console.log('DDth with current month/year:', date);
+                    
+                    if (!isNaN(date)) {
+                        return date;
+                    }
+                }
+                
+                // Fallback: try direct parsing
+                let date = new Date(cleanDateStr);
                 console.log('Direct parsing result:', date, 'isValid:', !isNaN(date));
                 
                 const finalResult = isNaN(date) ? null : date;
                 console.log('Final parse result:', finalResult);
                 return finalResult;
+            }
+
+            parseNaturalLanguageDate(dateStr) {
+                const today = new Date();
+                const normalizedStr = dateStr.toLowerCase().trim();
+                
+                console.log('Parsing natural language date:', normalizedStr);
+                
+                // Only process if it's actually a natural language term, not a regular date
+                // Check if it contains numbers followed by month names (likely a regular date)
+                if (/\d+\s*(?:january|february|march|april|may|june|july|august|september|october|november|december)/i.test(normalizedStr)) {
+                    console.log('Skipping - contains number + month name');
+                    return null; // Let regular date parsing handle this
+                }
+                
+                // Check if it contains month names followed by numbers (likely a regular date)
+                if (/(?:january|february|march|april|may|june|july|august|september|october|november|december)\s*\d+/i.test(normalizedStr)) {
+                    console.log('Skipping - contains month name + number');
+                    return null; // Let regular date parsing handle this
+                }
+                
+                // Handle "today", "tomorrow", "yesterday" - must be exact matches
+                if (normalizedStr === 'today') {
+                    console.log('Matched: today');
+                    return new Date(today);
+                }
+                
+                if (normalizedStr === 'tomorrow') {
+                    console.log('Matched: tomorrow');
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    return tomorrow;
+                }
+                
+                if (normalizedStr === 'yesterday') {
+                    console.log('Matched: yesterday');
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1);
+                    return yesterday;
+                }
+                
+                // Handle "next/this [weekday]" - be more strict about format
+                const weekdayMatch = normalizedStr.match(/^(next|this)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/);
+                if (weekdayMatch) {
+                    console.log('Matched weekday:', weekdayMatch);
+                    const direction = weekdayMatch[1];
+                    const weekday = weekdayMatch[2];
+                    const result = this.getNextWeekday(weekday, direction === 'next');
+                    console.log('Weekday result:', result);
+                    return result;
+                }
+                
+                // Handle "in X days/weeks/months" - be more strict
+                const inTimeMatch = normalizedStr.match(/^in\s+(\d+)\s+(day|days|week|weeks|month|months)$/);
+                if (inTimeMatch) {
+                    console.log('Matched in time:', inTimeMatch);
+                    const amount = parseInt(inTimeMatch[1]);
+                    const unit = inTimeMatch[2];
+                    const result = this.addTimeToDate(today, amount, unit);
+                    console.log('In time result:', result);
+                    return result;
+                }
+                
+                // Handle "X days/weeks/months from now" or "X days/weeks/months later" - be more strict
+                const fromNowMatch = normalizedStr.match(/^(\d+)\s+(day|days|week|weeks|month|months)\s+(from\s+now|later)$/);
+                if (fromNowMatch) {
+                    console.log('Matched from now:', fromNowMatch);
+                    const amount = parseInt(fromNowMatch[1]);
+                    const unit = fromNowMatch[2];
+                    const result = this.addTimeToDate(today, amount, unit);
+                    console.log('From now result:', result);
+                    return result;
+                }
+                
+                console.log('No natural language match found for:', normalizedStr);
+                return null;
+            }
+
+            getNextWeekday(weekdayName, isNext = true) {
+                const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                const targetDay = weekdays.indexOf(weekdayName.toLowerCase());
+                const today = new Date();
+                const currentDay = today.getDay();
+                
+                let daysUntilTarget = targetDay - currentDay;
+                
+                if (isNext) {
+                    // "next Monday" means next week's Monday, even if today is Monday
+                    if (daysUntilTarget <= 0) {
+                        daysUntilTarget += 7;
+                    }
+                } else {
+                    // "this Monday" means this week's Monday, or today if today is Monday
+                    if (daysUntilTarget < 0) {
+                        daysUntilTarget += 7;
+                    }
+                }
+                
+                const result = new Date(today);
+                result.setDate(today.getDate() + daysUntilTarget);
+                return result;
+            }
+
+            addTimeToDate(baseDate, amount, unit) {
+                const result = new Date(baseDate);
+                
+                switch (unit) {
+                    case 'day':
+                    case 'days':
+                        result.setDate(result.getDate() + amount);
+                        break;
+                    case 'week':
+                    case 'weeks':
+                        result.setDate(result.getDate() + (amount * 7));
+                        break;
+                    case 'month':
+                    case 'months':
+                        result.setMonth(result.getMonth() + amount);
+                        break;
+                }
+                
+                return result;
             }
 
             renderCalendar() {
