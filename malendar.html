@@ -200,7 +200,7 @@
             position: relative;
             border: none;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.1s, border 0.2s;
         }
 
         .calendar-day:hover {
@@ -241,6 +241,7 @@
             cursor: pointer;
             transition: opacity 0.2s;
             position: relative;
+            user-select: none;
         }
 
         .milestone:hover {
@@ -387,6 +388,8 @@
                     <div class="calendar-nav">
                         <button id="prevMonth" class="btn">← Previous</button>
                         <button id="nextMonth" class="btn">Next →</button>
+                        <button id="resetBtn" class="btn" style="margin-left: 1rem; background-color: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); border-color: hsl(var(--destructive));">Reset</button>
+                        <button id="exportJiraBtn" class="btn" style="margin-left: 0.5rem; background-color: hsl(33 100% 50%); color: white; border-color: hsl(33 100% 50%);">Export to JIRA</button>
                     </div>
                     <div class="month-year" id="monthYear"></div>
                     <button id="todayBtn" class="btn btn-primary">Today</button>
@@ -428,6 +431,18 @@
                     this.currentDate = new Date();
                     this.currentDate.setDate(1);
                     this.renderCalendar();
+                });
+
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    if (confirm('Are you sure you want to delete all events? This action cannot be undone.')) {
+                        this.events.clear();
+                        this.updateShareUrl();
+                        this.renderCalendar();
+                    }
+                });
+
+                document.getElementById('exportJiraBtn').addEventListener('click', () => {
+                    this.exportToJira();
                 });
 
                 document.getElementById('copyBtn').addEventListener('click', async () => {
@@ -600,7 +615,7 @@
                     const eventElement = document.createElement('div');
                     eventElement.className = `milestone ${event.priority}-priority`;
                     eventElement.textContent = event.text;
-                    eventElement.title = `${event.text}\nClick to delete`;
+                    eventElement.title = `${event.text}\nClick × to delete`;
                     
                     // Add delete button
                     const deleteBtn = document.createElement('button');
@@ -618,6 +633,112 @@
                     eventElement.appendChild(deleteBtn);
                     dayElement.appendChild(eventElement);
                 });
+            }
+
+            exportToJira() {
+                // Check if there are any events
+                if (this.events.size === 0) {
+                    alert('No events found to export.');
+                    return;
+                }
+
+                // Get board name from localStorage or ask user
+                let boardName = localStorage.getItem('malendarJiraBoardName');
+                if (!boardName) {
+                    boardName = prompt('Enter JIRA board name:');
+                    if (!boardName || !boardName.trim()) {
+                        return;
+                    }
+                    localStorage.setItem('malendarJiraBoardName', boardName.trim());
+                } else {
+                    // Confirm if user wants to use the saved board name
+                    const useStoredBoard = confirm(`Use saved board name: "${boardName}"?\n\nClick OK to use saved board or Cancel to enter a new one.`);
+                    if (!useStoredBoard) {
+                        boardName = prompt('Enter JIRA board name:', boardName);
+                        if (!boardName || !boardName.trim()) {
+                            return;
+                        }
+                        localStorage.setItem('malendarJiraBoardName', boardName.trim());
+                    }
+                }
+
+                // Always ask for epic number
+                const epicNumber = prompt('Enter Epic number (e.g., PROJ-123):');
+                if (!epicNumber || !epicNumber.trim()) {
+                    return;
+                }
+
+                // Generate the JIRA prompt
+                const jiraPrompt = this.generateJiraPrompt(boardName.trim(), epicNumber.trim());
+
+                // Copy to clipboard
+                this.copyToClipboard(jiraPrompt);
+            }
+
+            generateJiraPrompt(boardName, epicNumber) {
+                // Sort events by date
+                const sortedEvents = Array.from(this.events.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                let prompt = `Create JIRA tickets for the following events in board "${boardName}" under epic ${epicNumber}:\n\n`;
+
+                sortedEvents.forEach(([dateKey, events]) => {
+                    const date = new Date(dateKey);
+                    const formattedDate = date.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    prompt += `**${formattedDate} (${dateKey})**\n`;
+                    
+                    events.forEach(event => {
+                        const priorityLabel = event.priority === 'high' ? ' [HIGH PRIORITY]' : 
+                                            event.priority === 'medium' ? ' [MEDIUM PRIORITY]' : '';
+                        prompt += `- ${event.text}${priorityLabel}\n`;
+                    });
+                    
+                    prompt += '\n';
+                });
+
+                prompt += `Instructions:\n`;
+                prompt += `- Create each event as a separate JIRA story\n`;
+                prompt += `- Set the epic link to ${epicNumber}\n`;
+                prompt += `- Use the event text as the ticket summary\n`;
+                prompt += `- Set appropriate priority based on labels (High/Medium/Normal)\n`;
+                prompt += `- Include the date in the description or as a start date\n`;
+                prompt += `- Group related tasks if they appear to be part of the same feature\n`;
+
+                return prompt;
+            }
+
+            async copyToClipboard(text) {
+                try {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(text);
+                    } else {
+                        // Fallback method
+                        const textArea = document.createElement('textarea');
+                        textArea.value = text;
+                        textArea.style.position = 'fixed';
+                        textArea.style.left = '-999999px';
+                        textArea.style.top = '-999999px';
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                    }
+                    
+                    alert('JIRA prompt copied to clipboard! You can now paste it to the JIRA MCP server.');
+                } catch (err) {
+                    console.error('Failed to copy: ', err);
+                    // Show the text in a modal/alert as fallback
+                    const shouldShow = confirm('Failed to copy to clipboard. Would you like to see the text to copy manually?');
+                    if (shouldShow) {
+                        prompt('JIRA Prompt (copy this text):', text);
+                    }
+                }
             }
 
             updateShareUrl() {
