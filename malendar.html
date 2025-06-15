@@ -759,8 +759,8 @@
                 // Generate the JIRA prompt
                 const jiraPrompt = this.generateJiraPrompt(boardName, epicNumber.trim());
 
-                // Copy to clipboard
-                this.copyToClipboard(jiraPrompt);
+                // Show prompt in modal for editing
+                this.showJiraPromptModal(jiraPrompt);
             }
 
             showInputModal(title, message, defaultValue = '') {
@@ -900,6 +900,102 @@
                             handleCancel();
                         }
                     });
+                });
+            }
+
+            showJiraPromptModal(jiraPrompt) {
+                // Create modal overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay';
+                
+                // Create modal
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.style.maxWidth = '600px';
+                modal.style.width = '95%';
+                
+                modal.innerHTML = `
+                    <h3>JIRA Export Prompt</h3>
+                    <p>Review and edit the prompt below, then copy it to use with the JIRA MCP server:</p>
+                    <textarea class="modal-input" style="min-height: 300px; font-family: monospace; font-size: 0.8rem; resize: vertical;">${jiraPrompt}</textarea>
+                    <div class="modal-buttons">
+                        <button class="modal-btn modal-btn-secondary" data-action="cancel">Cancel</button>
+                        <button class="modal-btn modal-btn-primary" data-action="copy">Copy to Clipboard</button>
+                    </div>
+                `;
+                
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+                
+                const textarea = modal.querySelector('textarea');
+                const cancelBtn = modal.querySelector('[data-action="cancel"]');
+                const copyBtn = modal.querySelector('[data-action="copy"]');
+                
+                // Focus and select textarea
+                setTimeout(() => {
+                    textarea.focus();
+                    textarea.select();
+                }, 10);
+                
+                const cleanup = () => {
+                    document.body.removeChild(overlay);
+                };
+                
+                const handleCopy = async () => {
+                    const text = textarea.value;
+                    try {
+                        if (navigator.clipboard && window.isSecureContext) {
+                            await navigator.clipboard.writeText(text);
+                        } else {
+                            // Fallback method
+                            textarea.select();
+                            document.execCommand('copy');
+                        }
+                        
+                        // Show success feedback
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        copyBtn.style.backgroundColor = 'hsl(142 76% 36%)';
+                        setTimeout(() => {
+                            cleanup();
+                        }, 1000);
+                    } catch (err) {
+                        console.error('Failed to copy: ', err);
+                        // Show error feedback
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copy failed';
+                        copyBtn.style.backgroundColor = 'hsl(var(--destructive))';
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                            copyBtn.style.backgroundColor = '';
+                        }, 2000);
+                    }
+                };
+                
+                const handleCancel = () => {
+                    cleanup();
+                };
+                
+                // Event listeners
+                cancelBtn.addEventListener('click', handleCancel);
+                copyBtn.addEventListener('click', handleCopy);
+                
+                // Keyboard shortcuts
+                textarea.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        handleCancel();
+                    } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        handleCopy();
+                    }
+                });
+                
+                // Click outside to cancel
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        handleCancel();
+                    }
                 });
             }
 
