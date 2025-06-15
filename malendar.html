@@ -360,6 +360,94 @@
                 flex: 1;
             }
         }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .modal p {
+            margin: 0 0 1rem 0;
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+
+        .modal-input:focus {
+            border-color: hsl(var(--ring));
+            box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .modal-btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-color: hsl(var(--primary));
+        }
+
+        .modal-btn-primary:hover {
+            background-color: hsl(var(--primary) / 0.9);
+        }
+
+        .modal-btn-secondary {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: hsl(var(--accent));
+        }
     </style>
 </head>
 <body>
@@ -510,8 +598,8 @@
                 }
             }
 
-            handleDayClick(date) {
-                const eventText = prompt('Enter event name:');
+            async handleDayClick(date) {
+                const eventText = await this.showInputModal('Add Event', 'Enter event name:');
                 if (eventText && eventText.trim()) {
                     let priority = 'normal';
                     let cleanText = eventText.trim();
@@ -642,37 +730,192 @@
                     return;
                 }
 
+                this.handleBoardNameInput();
+            }
+
+            async handleBoardNameInput() {
                 // Get board name from localStorage or ask user
                 let boardName = localStorage.getItem('malendarJiraBoardName');
                 if (!boardName) {
-                    boardName = prompt('Enter JIRA board name:');
+                    boardName = await this.showInputModal('JIRA Board Name', 'Enter JIRA board name:');
                     if (!boardName || !boardName.trim()) {
                         return;
                     }
                     localStorage.setItem('malendarJiraBoardName', boardName.trim());
+                    this.handleEpicNumberInput(boardName.trim());
                 } else {
                     // Confirm if user wants to use the saved board name
-                    const useStoredBoard = confirm(`Use saved board name: "${boardName}"?\n\nClick OK to use saved board or Cancel to enter a new one.`);
-                    if (!useStoredBoard) {
-                        boardName = prompt('Enter JIRA board name:', boardName);
+                    const useStoredBoard = await this.showConfirmModal(
+                        'Use Saved Board?', 
+                        `Use saved board name: "${boardName}"?`,
+                        'Use Saved',
+                        'Enter New'
+                    );
+                    if (useStoredBoard) {
+                        this.handleEpicNumberInput(boardName);
+                    } else {
+                        boardName = await this.showInputModal('JIRA Board Name', 'Enter JIRA board name:', boardName);
                         if (!boardName || !boardName.trim()) {
                             return;
                         }
                         localStorage.setItem('malendarJiraBoardName', boardName.trim());
+                        this.handleEpicNumberInput(boardName.trim());
                     }
                 }
+            }
 
+            async handleEpicNumberInput(boardName) {
                 // Always ask for epic number
-                const epicNumber = prompt('Enter Epic number (e.g., PROJ-123):');
+                const epicNumber = await this.showInputModal('Epic Number', 'Enter Epic number (e.g., PROJ-123):');
                 if (!epicNumber || !epicNumber.trim()) {
                     return;
                 }
 
                 // Generate the JIRA prompt
-                const jiraPrompt = this.generateJiraPrompt(boardName.trim(), epicNumber.trim());
+                const jiraPrompt = this.generateJiraPrompt(boardName, epicNumber.trim());
 
                 // Copy to clipboard
                 this.copyToClipboard(jiraPrompt);
+            }
+
+            showInputModal(title, message, defaultValue = '') {
+                return new Promise((resolve) => {
+                    // Create modal overlay
+                    const overlay = document.createElement('div');
+                    overlay.className = 'modal-overlay';
+                    
+                    // Create modal
+                    const modal = document.createElement('div');
+                    modal.className = 'modal';
+                    
+                    modal.innerHTML = `
+                        <h3>${title}</h3>
+                        <p>${message}</p>
+                        <input type="text" class="modal-input" value="${defaultValue}" placeholder="Enter value...">
+                        <div class="modal-buttons">
+                            <button class="modal-btn modal-btn-secondary" data-action="cancel">Cancel</button>
+                            <button class="modal-btn modal-btn-primary" data-action="ok">OK</button>
+                        </div>
+                    `;
+                    
+                    overlay.appendChild(modal);
+                    document.body.appendChild(overlay);
+                    
+                    const input = modal.querySelector('.modal-input');
+                    const cancelBtn = modal.querySelector('[data-action="cancel"]');
+                    const okBtn = modal.querySelector('[data-action="ok"]');
+                    
+                    // Focus and select input
+                    setTimeout(() => {
+                        input.focus();
+                        input.select();
+                    }, 10);
+                    
+                    const cleanup = () => {
+                        document.body.removeChild(overlay);
+                    };
+                    
+                    const handleOk = () => {
+                        const value = input.value.trim();
+                        cleanup();
+                        resolve(value);
+                    };
+                    
+                    const handleCancel = () => {
+                        cleanup();
+                        resolve(null);
+                    };
+                    
+                    // Event listeners
+                    cancelBtn.addEventListener('click', handleCancel);
+                    okBtn.addEventListener('click', handleOk);
+                    
+                    // Enter key submits
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleOk();
+                        } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            handleCancel();
+                        }
+                    });
+                    
+                    // Click outside to cancel
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) {
+                            handleCancel();
+                        }
+                    });
+                });
+            }
+
+            showConfirmModal(title, message, okText = 'OK', cancelText = 'Cancel') {
+                return new Promise((resolve) => {
+                    // Create modal overlay
+                    const overlay = document.createElement('div');
+                    overlay.className = 'modal-overlay';
+                    
+                    // Create modal
+                    const modal = document.createElement('div');
+                    modal.className = 'modal';
+                    
+                    modal.innerHTML = `
+                        <h3>${title}</h3>
+                        <p>${message}</p>
+                        <div class="modal-buttons">
+                            <button class="modal-btn modal-btn-secondary" data-action="cancel">${cancelText}</button>
+                            <button class="modal-btn modal-btn-primary" data-action="ok">${okText}</button>
+                        </div>
+                    `;
+                    
+                    overlay.appendChild(modal);
+                    document.body.appendChild(overlay);
+                    
+                    const cancelBtn = modal.querySelector('[data-action="cancel"]');
+                    const okBtn = modal.querySelector('[data-action="ok"]');
+                    
+                    // Focus OK button
+                    setTimeout(() => okBtn.focus(), 10);
+                    
+                    const cleanup = () => {
+                        document.body.removeChild(overlay);
+                    };
+                    
+                    const handleOk = () => {
+                        cleanup();
+                        resolve(true);
+                    };
+                    
+                    const handleCancel = () => {
+                        cleanup();
+                        resolve(false);
+                    };
+                    
+                    // Event listeners
+                    cancelBtn.addEventListener('click', handleCancel);
+                    okBtn.addEventListener('click', handleOk);
+                    
+                    // Enter key submits, Escape cancels
+                    document.addEventListener('keydown', function keyHandler(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            document.removeEventListener('keydown', keyHandler);
+                            handleOk();
+                        } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            document.removeEventListener('keydown', keyHandler);
+                            handleCancel();
+                        }
+                    });
+                    
+                    // Click outside to cancel
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) {
+                            handleCancel();
+                        }
+                    });
+                });
             }
 
             generateJiraPrompt(boardName, epicNumber) {
