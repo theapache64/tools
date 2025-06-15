@@ -316,21 +316,26 @@
             <textarea 
                 id="milestoneText" 
                 class="textarea" 
-placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kickoff meeting - June 16&#10;- Design phase complete - June 20&#10;- Development sprint 1 - June 25&#10;- Code review session - July 1&#10;- Final testing - July 10&#10;- Project delivery - July 15"
+placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kickoff meeting - June 16&#10;- Design phase complete - June 20th&#10;- Development sprint 1 - 25th June&#10;- Code review session - 1st&#10;- Final testing - July 10&#10;- Project delivery - 15th July"
             ></textarea>
 
             <div class="example-text">
                 <strong>Supported date formats:</strong><br>
-                • YYYY-MM-DD (2025-06-16)<br>
-                • MM/DD/YYYY (06/16/2025)<br>
-                • DD/MM/YYYY (16/06/2025)<br>
                 • Month DD, YYYY (June 16, 2025)<br>
-                • Month DD (June 16) - uses current or next year<br>
+                • Month DD (June 16) - uses current year<br>
+                • Month DDth (June 16th) - uses current year<br>
+                • DDth Month (16th June) - uses current year<br>
+                • DDth (16th) - uses current month and year<br>
                 <br>
                 <strong>Priority markers:</strong><br>
                 • Add [HIGH] for high priority (red)<br>
                 • Add [MEDIUM] for medium priority (orange)<br>
-                • Default is normal priority (blue)
+                • Default is normal priority (black)<br>
+                <br>
+                <strong>Example:</strong><br>
+                • Project kickoff - June 20, 2025<br>
+                • Design review [HIGH] - 21st June<br>
+                • Testing phase [MEDIUM] - 30th<br>
             </div>
 
             <div class="share-section">
@@ -377,10 +382,18 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
             }
 
             bindEvents() {
-                document.getElementById('milestoneText').addEventListener('input', (e) => {
+                const textareaElement = document.getElementById('milestoneText');
+                
+                textareaElement.addEventListener('input', (e) => {
                     this.parseMilestones(e.target.value);
                     this.renderCalendar();
                     this.updateShareUrl();
+                });
+
+                textareaElement.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handleEnterKey(e);
+                    }
                 });
 
                 document.getElementById('prevMonth').addEventListener('click', () => {
@@ -427,6 +440,81 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                 });
             }
 
+            handleEnterKey(e) {
+                const textarea = e.target;
+                const lines = textarea.value.split('\n');
+                const currentLineIndex = textarea.value.substr(0, textarea.selectionStart).split('\n').length - 1;
+                
+                if (currentLineIndex >= 0 && currentLineIndex < lines.length) {
+                    const currentLine = lines[currentLineIndex];
+                    const currentDate = new Date();
+                    const currentYear = currentDate.getFullYear();
+                    const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long' });
+                    
+                    let updatedLine = currentLine;
+                    let wasUpdated = false;
+                    
+                    // Skip if line already has a 4-digit year
+                    if (/\b\d{4}\b/.test(currentLine)) {
+                        return;
+                    }
+                    
+                    // Pattern 1: "Month DDth" -> "Month DD, YYYY" (remove ordinal, add year)
+                    const monthOrdinalPattern = /(\w+\s+)(\d{1,2})(st|nd|rd|th)(\s|$)/;
+                    if (monthOrdinalPattern.test(updatedLine)) {
+                        updatedLine = updatedLine.replace(monthOrdinalPattern, `$1$2, ${currentYear}$4`);
+                        wasUpdated = true;
+                    }
+                    // Pattern 2: "Month DD" -> "Month DD, YYYY" (add year)
+                    else {
+                        const monthDayPattern = /(\w+\s+\d{1,2})(\s|$)/;
+                        const monthDayMatch = updatedLine.match(monthDayPattern);
+                        if (monthDayMatch && !monthDayMatch[1].includes(',')) {
+                            updatedLine = updatedLine.replace(monthDayPattern, `$1, ${currentYear}$2`);
+                            wasUpdated = true;
+                        }
+                    }
+                    
+                    // Pattern 3: "DDth Month" -> "DDth Month, YYYY" (add year)
+                    if (!wasUpdated) {
+                        const ordinalMonthPattern = /(\d{1,2}(?:st|nd|rd|th)\s+\w+)(\s|$)/;
+                        const ordinalMonthMatch = updatedLine.match(ordinalMonthPattern);
+                        if (ordinalMonthMatch && !ordinalMonthMatch[1].includes(',')) {
+                            updatedLine = updatedLine.replace(ordinalMonthPattern, `$1, ${currentYear}$2`);
+                            wasUpdated = true;
+                        }
+                    }
+                    
+                    // Pattern 4: "DDth" -> "DDth Month, YYYY" (add month and year)
+                    if (!wasUpdated) {
+                        const ordinalOnlyPattern = /(\d{1,2}(?:st|nd|rd|th))(\s|$)/;
+                        const ordinalOnlyMatch = updatedLine.match(ordinalOnlyPattern);
+                        if (ordinalOnlyMatch && !(/\w+/.test(updatedLine.substring(ordinalOnlyMatch.index + ordinalOnlyMatch[1].length)))) {
+                            updatedLine = updatedLine.replace(ordinalOnlyPattern, `$1 ${currentMonth}, ${currentYear}$2`);
+                            wasUpdated = true;
+                        }
+                    }
+                    
+                    if (wasUpdated) {
+                        lines[currentLineIndex] = updatedLine;
+                        textarea.value = lines.join('\n');
+                        
+                        // Place cursor at end of line
+                        const newPosition = lines.slice(0, currentLineIndex).join('\n').length + 
+                                          (currentLineIndex > 0 ? 1 : 0) + updatedLine.length;
+                        textarea.setSelectionRange(newPosition, newPosition);
+                        
+                        // Trigger update
+                        this.parseMilestones(textarea.value);
+                        this.renderCalendar();
+                        this.updateShareUrl();
+                        
+                        // Prevent default Enter behavior since we modified the content
+                        e.preventDefault();
+                    }
+                }
+            }
+
             parseMilestones(text) {
                 this.milestones = [];
                 const lines = text.split('\n');
@@ -453,13 +541,15 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
                     text = text.replace(/\[MEDIUM\]/gi, '').trim();
                 }
 
-                // Date patterns
+                // Date patterns - support all date formats
                 const datePatterns = [
-                    /(\d{4}-\d{2}-\d{2})/,           // YYYY-MM-DD
-                    /(\d{1,2}\/\d{1,2}\/\d{4})/,     // MM/DD/YYYY or DD/MM/YYYY
-                    /(\w+ \d{1,2},? \d{4})/,         // Month DD, YYYY
-                    /(\d{1,2} \w+ \d{4})/,           // DD Month YYYY
-                    /(\w+ \d{1,2})(?![,\s]*\d{4})/,  // Month DD (without year)
+                    /(\w+ \d{1,2},? \d{4})/,                    // Month DD, YYYY
+                    /(\d{1,2}(?:st|nd|rd|th) \w+,? \d{4})/,     // DDth Month, YYYY
+                    /(\w+ \d{1,2}(?:st|nd|rd|th),? \d{4})/,     // Month DDth, YYYY
+                    /(\w+ \d{1,2})(?![,\s]*\d{4})/,             // Month DD (without year)
+                    /(\w+ \d{1,2}(?:st|nd|rd|th))(?![,\s]*\d{4})/, // Month DDth (without year)
+                    /(\d{1,2}(?:st|nd|rd|th) \w+)(?![,\s]*\d{4})/, // DDth Month (without year)
+                    /(\d{1,2}(?:st|nd|rd|th))(?!\s+\w)/,        // DDth only
                 ];
 
                 let dateMatch = null;
@@ -509,50 +599,102 @@ placeholder="Enter your milestones here...&#10;&#10;Example:&#10;- Project kicko
             parseDate(dateStr) {
                 console.log('Parsing date:', dateStr);
                 
-                // Handle "Month DD" format without year first (before trying direct parsing)
-                if (/^\w+ \d{1,2}$/.test(dateStr.trim())) {
-                    const currentDate = new Date();
-                    const currentYear = currentDate.getFullYear();
-                    const currentMonth = currentDate.getMonth();
+                const currentDate = new Date();
+                const currentYear = currentDate.getFullYear();
+                const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long' });
+                
+                // Handle "Month DDth" format (e.g., "June 16th") - use current year
+                if (/^\w+ \d{1,2}(st|nd|rd|th)$/.test(dateStr.trim())) {
+                    const monthOrdinalMatch = dateStr.match(/^(\w+) (\d{1,2})(st|nd|rd|th)$/);
+                    if (monthOrdinalMatch) {
+                        const month = monthOrdinalMatch[1];
+                        const day = monthOrdinalMatch[2];
+                        const fullDateStr = `${month} ${day}, ${currentYear}`;
+                        const date = new Date(fullDateStr);
+                        console.log('Month DDth with current year:', date);
+                        
+                        if (!isNaN(date)) {
+                            return date;
+                        }
+                    }
+                }
+                
+                // Handle "Month DDth, YYYY" format (e.g., "June 16th, 2025")
+                if (/^\w+ \d{1,2}(st|nd|rd|th),? \d{4}$/.test(dateStr.trim())) {
+                    const monthOrdinalMatch = dateStr.match(/^(\w+) (\d{1,2})(st|nd|rd|th),? (\d{4})$/);
+                    if (monthOrdinalMatch) {
+                        const month = monthOrdinalMatch[1];
+                        const day = monthOrdinalMatch[2];
+                        const year = monthOrdinalMatch[4];
+                        const fullDateStr = `${month} ${day}, ${year}`;
+                        const date = new Date(fullDateStr);
+                        console.log('Month DDth, YYYY:', date);
+                        
+                        if (!isNaN(date)) {
+                            return date;
+                        }
+                    }
+                }
+                
+                // Handle "DDth" format only (e.g., "16th") - use current month and year
+                if (/^\d{1,2}(st|nd|rd|th)$/.test(dateStr.trim())) {
+                    const dayNum = parseInt(dateStr.replace(/[^\d]/g, ''));
+                    const fullDateStr = `${currentMonth} ${dayNum}, ${currentYear}`;
+                    const date = new Date(fullDateStr);
+                    console.log('DDth with current month/year:', date);
                     
-                    // Try with current year first
-                    let dateWithCurrentYear = new Date(dateStr + ', ' + currentYear);
+                    if (!isNaN(date)) {
+                        return date;
+                    }
+                }
+                
+                // Handle "DDth Month" format (e.g., "16th June") - use current year
+                if (/^\d{1,2}(st|nd|rd|th) \w+$/.test(dateStr.trim())) {
+                    const ordinalMatch = dateStr.match(/^(\d{1,2})(st|nd|rd|th) (\w+)$/);
+                    if (ordinalMatch) {
+                        const day = ordinalMatch[1];
+                        const month = ordinalMatch[3];
+                        const fullDateStr = `${month} ${day}, ${currentYear}`;
+                        const date = new Date(fullDateStr);
+                        console.log('DDth Month with current year:', date);
+                        
+                        if (!isNaN(date)) {
+                            return date;
+                        }
+                    }
+                }
+                
+                // Handle "DDth Month, YYYY" format (e.g., "16th June, 2025")
+                if (/^\d{1,2}(st|nd|rd|th) \w+,? \d{4}$/.test(dateStr.trim())) {
+                    const ordinalMatch = dateStr.match(/^(\d{1,2})(st|nd|rd|th) (\w+),? (\d{4})$/);
+                    if (ordinalMatch) {
+                        const day = ordinalMatch[1];
+                        const month = ordinalMatch[3];
+                        const year = ordinalMatch[4];
+                        const fullDateStr = `${month} ${day}, ${year}`;
+                        const date = new Date(fullDateStr);
+                        console.log('DDth Month, YYYY:', date);
+                        
+                        if (!isNaN(date)) {
+                            return date;
+                        }
+                    }
+                }
+                
+                // Handle "Month DD" format without year - always use current year
+                if (/^\w+ \d{1,2}$/.test(dateStr.trim())) {
+                    const dateWithCurrentYear = new Date(dateStr + ', ' + currentYear);
                     console.log('Month DD with current year:', dateWithCurrentYear);
                     
                     if (!isNaN(dateWithCurrentYear)) {
-                        // If the month has already passed this year, use next year
-                        if (dateWithCurrentYear.getMonth() < currentMonth || 
-                            (dateWithCurrentYear.getMonth() === currentMonth && dateWithCurrentYear.getDate() < currentDate.getDate())) {
-                            dateWithCurrentYear = new Date(dateStr + ', ' + (currentYear + 1));
-                            console.log('Using next year:', dateWithCurrentYear);
-                        }
                         return dateWithCurrentYear;
                     }
                 }
                 
-                // Try different date formats
+                // Handle "Month DD, YYYY" format
                 let date = new Date(dateStr);
                 console.log('Direct parsing result:', date, 'isValid:', !isNaN(date));
                 
-                // If invalid, try MM/DD/YYYY format
-                if (isNaN(date)) {
-                    const parts = dateStr.split('/');
-                    if (parts.length === 3) {
-                        // Assume MM/DD/YYYY for US format
-                        date = new Date(parts[2], parts[0] - 1, parts[1]);
-                        console.log('MM/DD/YYYY format result:', date);
-                    }
-                }
-
-                // If still invalid, try DD/MM/YYYY format
-                if (isNaN(date)) {
-                    const parts = dateStr.split('/');
-                    if (parts.length === 3) {
-                        date = new Date(parts[2], parts[1] - 1, parts[0]);
-                        console.log('DD/MM/YYYY format result:', date);
-                    }
-                }
-
                 const finalResult = isNaN(date) ? null : date;
                 console.log('Final parse result:', finalResult);
                 return finalResult;
