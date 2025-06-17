@@ -448,7 +448,7 @@
         <div class="header-section">
             <div class="header">
                 <h1>🗓️ Malendar</h1>
-                <p>Click on any date to add events. Events are automatically saved in the URL for easy sharing.</p>
+                <p>Click on any date to add events. Click events to edit them. Events are automatically saved in the URL for easy sharing.</p>
             </div>
 
             <div class="share-section">
@@ -631,6 +631,51 @@
                 }
             }
 
+            async editEvent(eventId) {
+                // Find the event to edit
+                let eventToEdit = null;
+                
+                for (const [dateKey, events] of this.events.entries()) {
+                    const event = events.find(event => event.id === eventId);
+                    if (event) {
+                        eventToEdit = event;
+                        break;
+                    }
+                }
+                
+                if (eventToEdit) {
+                    // Show the current text with priority markers if any
+                    let currentText = eventToEdit.text;
+                    if (eventToEdit.priority === 'high') {
+                        currentText = `[HIGH] ${currentText}`;
+                    } else if (eventToEdit.priority === 'medium') {
+                        currentText = `[MEDIUM] ${currentText}`;
+                    }
+                    
+                    const newText = await this.showInputModal('Edit Event', 'Edit event name:', currentText);
+                    if (newText && newText.trim()) {
+                        let priority = 'normal';
+                        let cleanText = newText.trim();
+                        
+                        // Check for priority markers
+                        if (cleanText.includes('[HIGH]')) {
+                            priority = 'high';
+                            cleanText = cleanText.replace(/\[HIGH\]/gi, '').trim();
+                        } else if (cleanText.includes('[MEDIUM]')) {
+                            priority = 'medium';
+                            cleanText = cleanText.replace(/\[MEDIUM\]/gi, '').trim();
+                        }
+                        
+                        // Update the event
+                        eventToEdit.text = cleanText;
+                        eventToEdit.priority = priority;
+                        
+                        this.updateShareUrl();
+                        this.renderCalendar();
+                    }
+                }
+            }
+
             async handleDayClick(date) {
                 const eventText = await this.showInputModal('Add Event', 'Enter event name:');
                 if (eventText && eventText.trim()) {
@@ -759,8 +804,15 @@
                     const eventElement = document.createElement('div');
                     eventElement.className = `milestone ${event.priority}-priority`;
                     eventElement.textContent = event.text;
-                    eventElement.title = `${event.text}\nDrag to move, Click × to delete`;
+                    eventElement.title = `${event.text}\nClick to edit, Drag to move, Click × to delete`;
                     eventElement.draggable = true;
+                    
+                    // Add click to edit functionality
+                    eventElement.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        this.editEvent(event.id);
+                    });
                     
                     // Add drag event listeners to the event
                     eventElement.addEventListener('dragstart', (e) => {
