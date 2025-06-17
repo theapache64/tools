@@ -1214,7 +1214,9 @@
                     }));
                 }
                 
-                const encodedData = encodeURIComponent(JSON.stringify(eventsObj));
+                // Use Base64 encoding instead of URI encoding to handle special characters like %
+                const jsonString = JSON.stringify(eventsObj);
+                const encodedData = btoa(encodeURIComponent(jsonString));
                 const url = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
                 
                 // Update the browser URL without reloading the page
@@ -1226,7 +1228,9 @@
                 const data = urlParams.get('data');
                 if (data) {
                     try {
-                        const eventsObj = JSON.parse(decodeURIComponent(data));
+                        // Decode from Base64 first, then from URI encoding
+                        const jsonString = decodeURIComponent(atob(data));
+                        const eventsObj = JSON.parse(jsonString);
                         this.events.clear();
                         
                         for (const [dateKey, events] of Object.entries(eventsObj)) {
