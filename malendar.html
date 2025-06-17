@@ -207,6 +207,11 @@
             background-color: hsl(var(--accent) / 0.7);
         }
 
+        .calendar-day.drag-over {
+            background-color: hsl(var(--primary) / 0.1);
+            border: 2px dashed hsl(var(--primary));
+        }
+
         .calendar-day.other-month {
             background-color: hsl(var(--muted) / 0.5);
             color: hsl(var(--muted-foreground));
@@ -238,14 +243,23 @@
             margin-bottom: 0.25rem;
             word-wrap: break-word;
             line-height: 1.2;
-            cursor: pointer;
-            transition: opacity 0.2s;
+            cursor: grab;
+            transition: opacity 0.2s, transform 0.2s;
             position: relative;
             user-select: none;
         }
 
         .milestone:hover {
             opacity: 0.8;
+        }
+
+        .milestone:active {
+            cursor: grabbing;
+        }
+
+        .milestone.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
         }
 
         .milestone .delete-btn {
@@ -583,6 +597,40 @@
                 }
             }
 
+            moveEvent(eventId, newDate) {
+                // Find the event to move
+                let eventToMove = null;
+                let oldDateKey = null;
+                
+                for (const [dateKey, events] of this.events.entries()) {
+                    const index = events.findIndex(event => event.id === eventId);
+                    if (index !== -1) {
+                        eventToMove = events[index];
+                        oldDateKey = dateKey;
+                        events.splice(index, 1);
+                        if (events.length === 0) {
+                            this.events.delete(dateKey);
+                        }
+                        break;
+                    }
+                }
+                
+                if (eventToMove) {
+                    // Add event to new date
+                    const newDateKey = this.getDateKey(newDate);
+                    if (!this.events.has(newDateKey)) {
+                        this.events.set(newDateKey, []);
+                    }
+                    
+                    // Update the event's date
+                    eventToMove.date = new Date(newDate);
+                    this.events.get(newDateKey).push(eventToMove);
+                    
+                    this.updateShareUrl();
+                    this.renderCalendar();
+                }
+            }
+
             async handleDayClick(date) {
                 const eventText = await this.showInputModal('Add Event', 'Enter event name:');
                 if (eventText && eventText.trim()) {
@@ -680,6 +728,29 @@
                     this.handleDayClick(date);
                 });
 
+                // Add drag and drop event listeners for the day
+                dayElement.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dayElement.classList.add('drag-over');
+                });
+
+                dayElement.addEventListener('dragleave', (e) => {
+                    // Only remove drag-over if we're actually leaving the day element
+                    if (!dayElement.contains(e.relatedTarget)) {
+                        dayElement.classList.remove('drag-over');
+                    }
+                });
+
+                dayElement.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dayElement.classList.remove('drag-over');
+                    
+                    const eventId = e.dataTransfer.getData('text/plain');
+                    if (eventId) {
+                        this.moveEvent(parseFloat(eventId), date);
+                    }
+                });
+
                 // Add events for this day
                 const dateKey = this.getDateKey(date);
                 const dayEvents = this.events.get(dateKey) || [];
@@ -688,7 +759,23 @@
                     const eventElement = document.createElement('div');
                     eventElement.className = `milestone ${event.priority}-priority`;
                     eventElement.textContent = event.text;
-                    eventElement.title = `${event.text}\nClick × to delete`;
+                    eventElement.title = `${event.text}\nDrag to move, Click × to delete`;
+                    eventElement.draggable = true;
+                    
+                    // Add drag event listeners to the event
+                    eventElement.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', event.id.toString());
+                        eventElement.classList.add('dragging');
+                        e.stopPropagation(); // Prevent day click
+                    });
+
+                    eventElement.addEventListener('dragend', (e) => {
+                        eventElement.classList.remove('dragging');
+                        // Remove drag-over class from all calendar days
+                        document.querySelectorAll('.calendar-day').forEach(day => {
+                            day.classList.remove('drag-over');
+                        });
+                    });
                     
                     // Add delete button
                     const deleteBtn = document.createElement('button');
