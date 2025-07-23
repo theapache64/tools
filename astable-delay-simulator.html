@@ -327,6 +327,114 @@
             text-transform: uppercase;
         }
 
+        /* Statistics section styles */
+        .stats-container {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: var(--background);
+            border: var(--border-width) solid var(--foreground);
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .stats-title {
+            font-weight: bold;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        .day-mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .day-mode-toggle input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--foreground);
+            background: var(--background);
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .day-mode-toggle input[type="checkbox"]:checked {
+            background: var(--foreground);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.5rem;
+            border: var(--border-width) solid var(--foreground);
+            background-color: var(--neutral);
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--foreground);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .additional-stats {
+            border-top: var(--border-width) solid var(--foreground);
+            padding-top: 0.75rem;
+        }
+
+        .extra-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .extra-label {
+            font-weight: bold;
+        }
+
+        .extra-value {
+            font-weight: bold;
+            color: var(--foreground);
+        }
+
+        .battery-life {
+            background-color: var(--accent);
+            padding: 0.5rem;
+            border: var(--border-width) solid var(--foreground);
+            margin-top: 0.5rem;
+        }
+
+        .battery-life .extra-label {
+            color: var(--foreground);
+        }
+
+        .battery-life .extra-value {
+            color: var(--foreground);
+            font-size: 1.1rem;
+        }
+
         .disabled-label {
             color: var(--foreground);
             font-style: italic;
@@ -584,7 +692,62 @@
                 <div class="delay-info">
                     <div class="delay-value" id="delay-value">10000</div>
                     <div class="delay-label">Calculated Delay (ms)</div>
-                    <div class="status" id="status">LED blinking with calculated delay</div>
+                    
+                    <div class="stats-container">
+                        <div class="stats-header">
+                            <div class="stats-title">Blink Statistics</div>
+                            <label class="day-mode-toggle">
+                                <input type="checkbox" id="day-mode-toggle">
+                                <span class="toggle-text">12-hour operation (LDR)</span>
+                            </label>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="blinks-per-minute">--</div>
+                                <div class="stat-label">per minute</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="blinks-per-hour">--</div>
+                                <div class="stat-label">per hour</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="blinks-per-day">--</div>
+                                <div class="stat-label">per day</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="blinks-per-week">--</div>
+                                <div class="stat-label">per week</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="blinks-per-month">--</div>
+                                <div class="stat-label">per month</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="blinks-per-year">--</div>
+                                <div class="stat-label">per year</div>
+                            </div>
+                        </div>
+                        
+                        <div class="additional-stats">
+                            <div class="extra-stat">
+                                <span class="extra-label">Power cycles per day:</span>
+                                <span class="extra-value" id="power-cycles">--</span>
+                            </div>
+                            <div class="extra-stat">
+                                <span class="extra-label">LED on time per hour:</span>
+                                <span class="extra-value" id="led-on-time">--</span>
+                            </div>
+                            <div class="extra-stat">
+                                <span class="extra-label">Average power consumption:</span>
+                                <span class="extra-value" id="power-consumption">--</span>
+                            </div>
+                            <div class="extra-stat battery-life">
+                                <span class="extra-label">With 1.5V AA battery, this will run for:</span>
+                                <span class="extra-value" id="battery-life">--</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -675,8 +838,8 @@
         const led = document.getElementById('led');
         const timer = document.getElementById('timer');
         const delayDisplay = document.getElementById('delay-value');
-        const statusDisplay = document.getElementById('status');
         const chartBars = document.getElementById('chart-bars');
+        const dayModeToggle = document.getElementById('day-mode-toggle');
         
         const c2Slider = document.getElementById('c2');
         const r2Slider = document.getElementById('r2');
@@ -753,6 +916,110 @@
             r4Value.textContent = r4Res.display;
         }
 
+        // Calculate and update statistics
+        function updateStatistics(delay) {
+            const isDayMode = dayModeToggle.checked;
+            const blinkRatePerSecond = 1000 / delay; // blinks per second
+            
+            // Get current component values for power calculation
+            const c2Cap = getCapacitorValue(parseInt(c2Slider.value));
+            const r2Res = getResistorValue(parseInt(r2Slider.value));
+            const r3Res = getResistorValue(parseInt(r3Slider.value));
+            const r4Res = getResistorValue(parseInt(r4Slider.value));
+            
+            // Calculate blinks for different time periods
+            const blinksPerMinute = Math.round(blinkRatePerSecond * 60);
+            const blinksPerHour = Math.round(blinkRatePerSecond * 3600);
+            
+            // Apply day/night mode to daily calculations
+            const hoursPerDay = isDayMode ? 12 : 24;
+            const blinksPerDay = Math.round(blinkRatePerSecond * 3600 * hoursPerDay);
+            const blinksPerWeek = Math.round(blinksPerDay * 7);
+            const blinksPerMonth = Math.round(blinksPerDay * 30);
+            const blinksPerYear = Math.round(blinksPerDay * 365);
+            
+            // Additional useful stats
+            const powerCyclesPerDay = blinksPerDay * 2; // On and off cycles
+            const ledOnTimeMs = 100; // LED stays on for 100ms
+            const ledOnTimePerHour = Math.round((blinkRatePerSecond * 3600 * ledOnTimeMs) / 1000); // seconds
+            
+            // Power consumption calculation
+            const powerStats = calculatePowerConsumption(c2Cap.value, r2Res.value, r3Res.value, r4Res.value, blinkRatePerSecond, isDayMode);
+            
+            // Format large numbers
+            const formatNumber = (num) => {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                } else if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                } else {
+                    return num.toString();
+                }
+            };
+            
+            // Update the display
+            document.getElementById('blinks-per-minute').textContent = formatNumber(blinksPerMinute);
+            document.getElementById('blinks-per-hour').textContent = formatNumber(blinksPerHour);
+            document.getElementById('blinks-per-day').textContent = formatNumber(blinksPerDay);
+            document.getElementById('blinks-per-week').textContent = formatNumber(blinksPerWeek);
+            document.getElementById('blinks-per-month').textContent = formatNumber(blinksPerMonth);
+            document.getElementById('blinks-per-year').textContent = formatNumber(blinksPerYear);
+            document.getElementById('power-cycles').textContent = formatNumber(powerCyclesPerDay);
+            document.getElementById('led-on-time').textContent = `${ledOnTimePerHour}s`;
+            document.getElementById('power-consumption').textContent = powerStats.avgPowerMw + ' mW';
+            document.getElementById('battery-life').textContent = powerStats.batteryLife;
+        }
+
+        // Calculate power consumption and battery life
+        function calculatePowerConsumption(c2, r2, r3, r4, blinkRate, isDayMode) {
+            const batteryVoltage = 1.5; // 1.5V AA battery
+            const batteryCapacity = 2750; // mAh for AA alkaline battery (2700-2850 mAh typical)
+            
+            // Realistic astable multivibrator current consumption
+            // The circuit itself consumes very little power - most power goes to the LED
+            const quiescentCurrentMa = 0.5; // Very low quiescent current for astable multivibrator (< 1mA typically)
+            
+            // LED specifications
+            const ledCurrentMa = 20; // User specified 20mA LED
+            
+            // LED duty cycle (100ms on out of total cycle time)
+            const ledOnTime = 0.1; // 100ms = 0.1 seconds
+            const cycleTime = 1 / blinkRate; // Total cycle time in seconds
+            const ledDutyCycle = Math.min(ledOnTime / cycleTime, 1); // Cap at 100%
+            
+            // Average LED current over time (this is the main power consumer)
+            const avgLedCurrentMa = ledCurrentMa * ledDutyCycle;
+            
+            // Total average current consumption (LED dominates)
+            const totalCurrentMa = quiescentCurrentMa + avgLedCurrentMa;
+            const avgPowerMw = totalCurrentMa * batteryVoltage; // Power in mW
+            
+            // Battery life calculation with proper AA capacity
+            const hoursPerDay = isDayMode ? 12 : 24;
+            const dailyCurrentMa = totalCurrentMa * (hoursPerDay / 24);
+            const batteryLifeHours = batteryCapacity / dailyCurrentMa;
+            
+            // Format battery life
+            let batteryLife;
+            if (batteryLifeHours < 24) {
+                batteryLife = `${Math.round(batteryLifeHours)} hours`;
+            } else if (batteryLifeHours < 24 * 7) {
+                batteryLife = `${Math.round(batteryLifeHours / 24)} days`;
+            } else if (batteryLifeHours < 24 * 30) {
+                batteryLife = `${Math.round(batteryLifeHours / (24 * 7))} weeks`;
+            } else if (batteryLifeHours < 24 * 365) {
+                batteryLife = `${Math.round(batteryLifeHours / (24 * 30))} months`;
+            } else {
+                batteryLife = `${Math.round(batteryLifeHours / (24 * 365))} years`;
+            }
+            
+            return {
+                avgPowerMw: avgPowerMw.toFixed(1),
+                batteryLife: batteryLife,
+                currentMa: totalCurrentMa.toFixed(1)
+            };
+        }
+
         function updateDelay() {
             const c2Cap = getCapacitorValue(parseInt(c2Slider.value));
             const r2Res = getResistorValue(parseInt(r2Slider.value));
@@ -762,7 +1029,7 @@
             const delay = calculateDelay(c2Cap.value, r2Res.value, r3Res.value, r4Res.value);
             
             delayDisplay.textContent = delay;
-            statusDisplay.textContent = `LED blinking every ${delay}ms`;
+            updateStatistics(delay);
             
             // Restart blinking with new delay
             startBlinking(delay);
@@ -888,6 +1155,12 @@
         r4Slider.addEventListener('input', () => {
             updateDisplays();
             updateDelay();
+        });
+
+        // Day mode toggle event listener
+        dayModeToggle.addEventListener('change', () => {
+            const delay = parseInt(delayDisplay.textContent);
+            updateStatistics(delay);
         });
 
         // Initialize
