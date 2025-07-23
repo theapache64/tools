@@ -212,6 +212,11 @@
             border: 2px dashed hsl(var(--primary));
         }
 
+        .calendar-day.multi-select {
+            background-color: hsl(var(--primary) / 0.2);
+            border: 2px solid hsl(var(--primary));
+        }
+
         .calendar-day.other-month {
             background-color: hsl(var(--muted) / 0.5);
             color: hsl(var(--muted-foreground));
@@ -448,7 +453,7 @@
         <div class="header-section">
             <div class="header">
                 <h1>🗓️ Malendar</h1>
-                <p>Click on any date to add events. Click events to edit them. Events are automatically saved in the URL for easy sharing.</p>
+                <p>Click on any date to add events. Click events to edit them. Drag events to move them, or Ctrl+Drag to copy to multiple dates. Events are automatically saved in the URL for easy sharing.</p>
             </div>
 
             <div class="share-section">
@@ -484,6 +489,9 @@
                 this.currentDate.setDate(1); // Set to first day of month
                 this.events = new Map(); // Use Map with date string as key
                 this.today = new Date(); // Keep reference to actual today
+                this.selectedDates = new Set(); // For multi-date selection
+                this.isDraggingForMultiple = false;
+                this.draggedEventId = null;
                 this.init();
             }
 
@@ -631,6 +639,62 @@
                 }
             }
 
+            copyEventToMultipleDates(eventId, dates) {
+                // Find the original event
+                let originalEvent = null;
+                
+                for (const [dateKey, events] of this.events.entries()) {
+                    const event = events.find(event => event.id === eventId);
+                    if (event) {
+                        originalEvent = event;
+                        break;
+                    }
+                }
+                
+                if (originalEvent && dates.size > 0) {
+                    // Create copies of the event for each selected date
+                    dates.forEach(date => {
+                        const dateKey = this.getDateKey(date);
+                        
+                        // Don't create duplicate on the same date
+                        const existingEvents = this.events.get(dateKey) || [];
+                        const alreadyExists = existingEvents.some(event => 
+                            event.text === originalEvent.text && 
+                            event.priority === originalEvent.priority
+                        );
+                        
+                        if (!alreadyExists) {
+                            if (!this.events.has(dateKey)) {
+                                this.events.set(dateKey, []);
+                            }
+                            
+                            const newEvent = {
+                                id: Date.now() + Math.random(),
+                                text: originalEvent.text,
+                                priority: originalEvent.priority,
+                                date: new Date(date)
+                            };
+                            
+                            this.events.get(dateKey).push(newEvent);
+                        }
+                    });
+                    
+                    this.updateShareUrl();
+                    this.renderCalendar();
+                }
+            }
+
+            clearMultiSelection() {
+                this.selectedDates.clear();
+                this.isDraggingForMultiple = false;
+                this.draggedEventId = null;
+                
+                // Remove visual indicators
+                document.querySelectorAll('.calendar-day').forEach(day => {
+                    day.classList.remove('multi-select');
+                });
+            }
+
             async editEvent(eventId) {
                 // Find the event to edit
                 let eventToEdit = null;
@@ -776,13 +840,23 @@
                 // Add drag and drop event listeners for the day
                 dayElement.addEventListener('dragover', (e) => {
                     e.preventDefault();
-                    dayElement.classList.add('drag-over');
+                    if (this.isDraggingForMultiple) {
+                        dayElement.classList.add('multi-select');
+                        this.selectedDates.add(date);
+                    } else {
+                        dayElement.classList.add('drag-over');
+                    }
                 });
 
                 dayElement.addEventListener('dragleave', (e) => {
                     // Only remove drag-over if we're actually leaving the day element
                     if (!dayElement.contains(e.relatedTarget)) {
-                        dayElement.classList.remove('drag-over');
+                        if (this.isDraggingForMultiple) {
+                            // Keep multi-select class but remove from selected dates if not confirmed
+                            // We'll handle this in drop event
+                        } else {
+                            dayElement.classList.remove('drag-over');
+                        }
                     }
                 });
 
@@ -792,7 +866,17 @@
                     
                     const eventId = e.dataTransfer.getData('text/plain');
                     if (eventId) {
-                        this.moveEvent(parseFloat(eventId), date);
+                        if (this.isDraggingForMultiple) {
+                            // Add this date to selection and show confirmation
+                            this.selectedDates.add(date);
+                            dayElement.classList.add('multi-select');
+                            
+                            // Show confirmation modal
+                            this.showMultiDateConfirmation(parseFloat(eventId));
+                        } else {
+                            // Regular single-date move
+                            this.moveEvent(parseFloat(eventId), date);
+                        }
                     }
                 });
 
@@ -804,7 +888,7 @@
                     const eventElement = document.createElement('div');
                     eventElement.className = `milestone ${event.priority}-priority`;
                     eventElement.textContent = event.text;
-                    eventElement.title = `${event.text}\nClick to edit, Drag to move, Click × to delete`;
+                    eventElement.title = `${event.text}\nClick to edit, Drag to move, Ctrl+Drag to copy to multiple dates, Click × to delete`;
                     eventElement.draggable = true;
                     
                     // Add click to edit functionality
@@ -818,11 +902,27 @@
                     eventElement.addEventListener('dragstart', (e) => {
                         e.dataTransfer.setData('text/plain', event.id.toString());
                         eventElement.classList.add('dragging');
+                        
+                        // Check if Ctrl (Windows/Linux) or Cmd (Mac) key is pressed for multi-date mode
+                        if (e.ctrlKey || e.metaKey) {
+                            this.isDraggingForMultiple = true;
+                            this.draggedEventId = event.id;
+                            this.selectedDates.clear(); // Start fresh
+                        } else {
+                            this.isDraggingForMultiple = false;
+                        }
+                        
                         e.stopPropagation(); // Prevent day click
                     });
 
                     eventElement.addEventListener('dragend', (e) => {
                         eventElement.classList.remove('dragging');
+                        
+                        // Clean up multi-selection if it was cancelled
+                        if (this.isDraggingForMultiple && this.selectedDates.size === 0) {
+                            this.clearMultiSelection();
+                        }
+                        
                         // Remove drag-over class from all calendar days
                         document.querySelectorAll('.calendar-day').forEach(day => {
                             day.classList.remove('drag-over');
@@ -900,6 +1000,33 @@
 
                 // Show prompt in modal for editing
                 this.showJiraPromptModal(jiraPrompt);
+            }
+
+            showMultiDateConfirmation(eventId) {
+                // Find the event name for display
+                let eventName = '';
+                for (const [dateKey, events] of this.events.entries()) {
+                    const event = events.find(event => event.id === eventId);
+                    if (event) {
+                        eventName = event.text;
+                        break;
+                    }
+                }
+                
+                const dateCount = this.selectedDates.size;
+                const message = `Copy "${eventName}" to ${dateCount} selected date${dateCount > 1 ? 's' : ''}?`;
+                
+                this.showConfirmModal(
+                    'Copy Event to Multiple Dates',
+                    message,
+                    'Copy',
+                    'Cancel'
+                ).then(confirmed => {
+                    if (confirmed) {
+                        this.copyEventToMultipleDates(eventId, this.selectedDates);
+                    }
+                    this.clearMultiSelection();
+                });
             }
 
             showInputModal(title, message, defaultValue = '') {
