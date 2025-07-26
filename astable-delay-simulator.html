@@ -567,6 +567,279 @@
             background-color: #FFD700;
         }
 
+        /* Build Management Styles */
+        .build-management {
+            margin-top: 2rem;
+            background-color: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .build-management:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .build-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .build-title {
+            font-weight: 800;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            color: var(--foreground);
+            border-bottom: var(--border-width) solid var(--foreground);
+            padding-bottom: 0.5rem;
+        }
+
+        .save-build-btn {
+            background-color: var(--primary);
+            color: white;
+            border: var(--border-width) solid var(--foreground);
+            padding: 0.75rem 1.5rem;
+            font-family: var(--font-family);
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: var(--box-shadow);
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .save-build-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .save-build-btn:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 0 var(--foreground);
+        }
+
+        .build-name-input {
+            padding: 0.75rem;
+            border: var(--border-width) solid var(--foreground);
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            font-size: 1rem;
+            margin-right: 0.5rem;
+            width: 250px;
+            font-weight: bold;
+        }
+
+        .build-name-input:focus {
+            outline: none;
+            box-shadow: 4px 4px 0 0 var(--foreground);
+            transform: translate(-2px, -2px);
+        }
+
+        .build-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .build-item {
+            border: var(--border-width) solid var(--foreground);
+            padding: 1.25rem;
+            background-color: var(--neutral);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .build-item:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0 0 var(--foreground);
+        }
+
+        .build-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .build-item-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--foreground);
+            flex: 1;
+            line-height: 1.2;
+        }
+
+        .build-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: bold;
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+            border: 2px solid var(--foreground);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .build-status:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0 0 var(--foreground);
+        }
+
+        .build-status.todo {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .build-status.in-progress {
+            background-color: #ffd93d;
+            color: var(--foreground);
+        }
+
+        .build-status.done {
+            background-color: #51cf66;
+            color: white;
+        }
+
+        .build-components {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .build-component {
+            text-align: center;
+            padding: 0.5rem;
+            background-color: var(--background);
+            border: 2px solid var(--foreground);
+            font-size: 0.9rem;
+        }
+
+        .build-component-label {
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--foreground);
+        }
+
+        .build-component-value {
+            color: var(--foreground);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .build-specs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-top: 0.75rem;
+            border-top: 2px solid var(--foreground);
+        }
+
+        .build-spec {
+            text-align: center;
+            padding: 0.4rem;
+            background-color: var(--accent);
+            border: 2px solid var(--foreground);
+            font-size: 0.85rem;
+        }
+
+        .build-spec-label {
+            font-weight: bold;
+            margin-bottom: 0.2rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .build-spec-value {
+            color: var(--foreground);
+            font-weight: bold;
+        }
+
+        .build-item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.75rem;
+            border-top: 2px solid var(--foreground);
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .build-timestamp {
+            font-weight: bold;
+            color: var(--foreground);
+        }
+
+        .build-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .build-action-btn {
+            padding: 0.4rem 0.8rem;
+            border: 2px solid var(--foreground);
+            background-color: var(--background);
+            color: var(--foreground);
+            cursor: pointer;
+            font-family: var(--font-family);
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .build-action-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0 0 var(--foreground);
+        }
+
+        .build-action-btn.load {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .build-action-btn.delete {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .build-empty {
+            text-align: center;
+            padding: 3rem;
+            color: var(--foreground);
+            font-style: italic;
+            border: 3px dashed var(--foreground);
+            background-color: var(--neutral);
+            font-size: 1.1rem;
+        }
+
+        .build-counter {
+            font-size: 1rem;
+            color: var(--foreground);
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
+            background-color: var(--accent);
+            border: var(--border-width) solid var(--foreground);
+            text-align: center;
+            font-weight: bold;
+            box-shadow: var(--box-shadow);
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .main-layout {
@@ -751,6 +1024,27 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Build Management Section -->
+        <div class="build-management">
+            <div class="build-header">
+                <div class="build-title">Build Queue Manager</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="text" id="build-name-input" class="build-name-input" placeholder="Enter build name..." maxlength="50">
+                    <button class="save-build-btn" id="save-build-btn">💾 Save Build</button>
+                </div>
+            </div>
+            
+            <div class="build-counter" id="build-counter">
+                📦 Total Builds: 0 | ⏳ TODO: 0 | 🔧 In Progress: 0 | ✅ Done: 0
+            </div>
+            
+            <div class="build-list" id="build-list">
+                <div class="build-empty" id="build-empty">
+                    🚀 No builds saved yet. Configure your components and save your first build!
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -856,6 +1150,276 @@
         let nextBlinkTime;
         let chartUpdateInterval;
         const maxBars = 100; // Maximum number of bars to display
+
+        // Build management
+        let builds = JSON.parse(localStorage.getItem('astable-builds') || '[]');
+        const buildStatuses = {
+            'TODO': { emoji: '⏳', label: 'TODO', class: 'todo' },
+            'IN_PROGRESS': { emoji: '🔧', label: 'In Progress', class: 'in-progress' },
+            'DONE': { emoji: '✅', label: 'Done', class: 'done' }
+        };
+
+        // Generate unique ID for builds
+        function generateBuildId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Save builds to localStorage
+        function saveBuildsToStorage() {
+            localStorage.setItem('astable-builds', JSON.stringify(builds));
+        }
+
+        // Format timestamp
+        function formatTimestamp(timestamp) {
+            return new Date(timestamp).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Get next status in cycle
+        function getNextStatus(currentStatus) {
+            const statusOrder = ['TODO', 'IN_PROGRESS', 'DONE'];
+            const currentIndex = statusOrder.indexOf(currentStatus);
+            return statusOrder[(currentIndex + 1) % statusOrder.length];
+        }
+
+        // Update build counter
+        function updateBuildCounter() {
+            const todoCount = builds.filter(b => b.status === 'TODO').length;
+            const inProgressCount = builds.filter(b => b.status === 'IN_PROGRESS').length;
+            const doneCount = builds.filter(b => b.status === 'DONE').length;
+            
+            document.getElementById('build-counter').textContent = 
+                `📦 Total Builds: ${builds.length} | ⏳ TODO: ${todoCount} | 🔧 In Progress: ${inProgressCount} | ✅ Done: ${doneCount}`;
+        }
+
+        // Create build item HTML
+        function createBuildItemHTML(build) {
+            const status = buildStatuses[build.status];
+            const powerStats = calculatePowerConsumption(build.components.c2, build.components.r2, build.components.r3, build.components.r4, build.blinkRate, build.isDayMode);
+            
+            return `
+                <div class="build-item" data-build-id="${build.id}">
+                    <div class="build-item-header">
+                        <div class="build-item-name">${build.name}</div>
+                        <div class="build-status ${status.class}" onclick="toggleBuildStatus('${build.id}')">
+                            ${status.emoji} ${status.label}
+                        </div>
+                    </div>
+                    
+                    <div class="build-components">
+                        <div class="build-component">
+                            <div class="build-component-label">C1</div>
+                            <div class="build-component-value">1000µF</div>
+                        </div>
+                        <div class="build-component">
+                            <div class="build-component-label">C2</div>
+                            <div class="build-component-value">${build.components.c2Display}</div>
+                        </div>
+                        <div class="build-component">
+                            <div class="build-component-label">R1</div>
+                            <div class="build-component-value">22Ω</div>
+                        </div>
+                        <div class="build-component">
+                            <div class="build-component-label">R2</div>
+                            <div class="build-component-value">${build.components.r2Display}</div>
+                        </div>
+                        <div class="build-component">
+                            <div class="build-component-label">R3</div>
+                            <div class="build-component-value">${build.components.r3Display}</div>
+                        </div>
+                        <div class="build-component">
+                            <div class="build-component-label">R4</div>
+                            <div class="build-component-value">${build.components.r4Display}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="build-specs">
+                        <div class="build-spec">
+                            <div class="build-spec-label">Delay</div>
+                            <div class="build-spec-value">${build.delay}ms</div>
+                        </div>
+                        <div class="build-spec">
+                            <div class="build-spec-label">Power</div>
+                            <div class="build-spec-value">${powerStats.avgPowerMw}mW</div>
+                        </div>
+                        <div class="build-spec">
+                            <div class="build-spec-label">Battery Life</div>
+                            <div class="build-spec-value">${powerStats.batteryLife}</div>
+                        </div>
+                        <div class="build-spec">
+                            <div class="build-spec-label">Operation</div>
+                            <div class="build-spec-value">${build.isDayMode ? '12h/day' : '24h/day'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="build-item-footer">
+                        <div class="build-timestamp">Created: ${formatTimestamp(build.timestamp)}</div>
+                        <div class="build-actions">
+                            <button class="build-action-btn load" onclick="loadBuild('${build.id}')">📋 Load</button>
+                            <button class="build-action-btn delete" onclick="deleteBuild('${build.id}')">🗑️ Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render builds list
+        function renderBuilds() {
+            const buildList = document.getElementById('build-list');
+            const buildEmpty = document.getElementById('build-empty');
+            
+            if (builds.length === 0) {
+                buildList.innerHTML = buildEmpty.outerHTML;
+            } else {
+                // Sort builds: TODO first, then IN_PROGRESS, then DONE, then by timestamp
+                const sortedBuilds = [...builds].sort((a, b) => {
+                    const statusOrder = { 'TODO': 0, 'IN_PROGRESS': 1, 'DONE': 2 };
+                    const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+                    if (statusDiff !== 0) return statusDiff;
+                    return b.timestamp - a.timestamp; // Newer first within same status
+                });
+                
+                buildList.innerHTML = `<div class="build-grid">${sortedBuilds.map(build => createBuildItemHTML(build)).join('')}</div>`;
+            }
+            
+            updateBuildCounter();
+        }
+
+        // Save current configuration as build
+        function saveBuild() {
+            const buildNameInput = document.getElementById('build-name-input');
+            const buildName = buildNameInput.value.trim();
+            
+            if (!buildName) {
+                alert('Please enter a build name!');
+                buildNameInput.focus();
+                return;
+            }
+            
+            // Check for duplicate names
+            if (builds.some(b => b.name.toLowerCase() === buildName.toLowerCase())) {
+                alert('A build with this name already exists!');
+                buildNameInput.focus();
+                return;
+            }
+            
+            // Get current component values
+            const c2Cap = getCapacitorValue(parseInt(c2Slider.value));
+            const r2Res = getResistorValue(parseInt(r2Slider.value));
+            const r3Res = getResistorValue(parseInt(r3Slider.value));
+            const r4Res = getResistorValue(parseInt(r4Slider.value));
+            const delay = parseInt(delayDisplay.textContent);
+            const isDayMode = dayModeToggle.checked;
+            const blinkRate = 1000 / delay;
+            
+            const newBuild = {
+                id: generateBuildId(),
+                name: buildName,
+                timestamp: Date.now(),
+                status: 'TODO',
+                components: {
+                    c2: c2Cap.value,
+                    c2Display: c2Cap.display,
+                    r2: r2Res.value,
+                    r2Display: r2Res.display,
+                    r3: r3Res.value,
+                    r3Display: r3Res.display,
+                    r4: r4Res.value,
+                    r4Display: r4Res.display,
+                    c2SliderIndex: parseInt(c2Slider.value),
+                    r2SliderIndex: parseInt(r2Slider.value),
+                    r3SliderIndex: parseInt(r3Slider.value),
+                    r4SliderIndex: parseInt(r4Slider.value)
+                },
+                delay: delay,
+                blinkRate: blinkRate,
+                isDayMode: isDayMode
+            };
+            
+            builds.unshift(newBuild); // Add to beginning
+            saveBuildsToStorage();
+            renderBuilds();
+            
+            // Clear input and show success
+            buildNameInput.value = '';
+            buildNameInput.placeholder = '✅ Build saved! Enter next name...';
+            setTimeout(() => {
+                buildNameInput.placeholder = 'Enter build name...';
+            }, 2000);
+        }
+
+        // Load build configuration
+        function loadBuild(buildId) {
+            const build = builds.find(b => b.id === buildId);
+            if (!build) return;
+            
+            // Set slider values
+            c2Slider.value = build.components.c2SliderIndex;
+            r2Slider.value = build.components.r2SliderIndex;
+            r3Slider.value = build.components.r3SliderIndex;
+            r4Slider.value = build.components.r4SliderIndex;
+            
+            // Set day mode
+            dayModeToggle.checked = build.isDayMode;
+            
+            // Update displays and simulation
+            updateDisplays();
+            updateDelay();
+            
+            // Show feedback
+            const buildNameInput = document.getElementById('build-name-input');
+            buildNameInput.placeholder = `✅ Loaded "${build.name}"`;
+            setTimeout(() => {
+                buildNameInput.placeholder = 'Enter build name...';
+            }, 2000);
+        }
+
+        // Toggle build status
+        function toggleBuildStatus(buildId) {
+            const build = builds.find(b => b.id === buildId);
+            if (!build) return;
+            
+            build.status = getNextStatus(build.status);
+            saveBuildsToStorage();
+            
+            // Update only the specific build item without re-sorting
+            updateBuildItem(buildId);
+            updateBuildCounter();
+        }
+
+        // Update a specific build item in the DOM
+        function updateBuildItem(buildId) {
+            const buildElement = document.querySelector(`[data-build-id="${buildId}"]`);
+            if (!buildElement) return;
+            
+            const build = builds.find(b => b.id === buildId);
+            if (!build) return;
+            
+            // Update the build item HTML
+            buildElement.outerHTML = createBuildItemHTML(build);
+        }
+
+        // Delete build
+        function deleteBuild(buildId) {
+            const build = builds.find(b => b.id === buildId);
+            if (!build) return;
+            
+            if (confirm(`Are you sure you want to delete "${build.name}"?`)) {
+                builds = builds.filter(b => b.id !== buildId);
+                saveBuildsToStorage();
+                renderBuilds();
+            }
+        }
+
+        // Make functions globally available
+        window.saveBuild = saveBuild;
+        window.loadBuild = loadBuild;
+        window.toggleBuildStatus = toggleBuildStatus;
+        window.deleteBuild = deleteBuild;
 
         // Initialize chart with idle bars
         function initializeChart() {
@@ -1163,10 +1727,20 @@
             updateStatistics(delay);
         });
 
+        // Build management event listeners
+        document.getElementById('save-build-btn').addEventListener('click', saveBuild);
+        
+        document.getElementById('build-name-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveBuild();
+            }
+        });
+
         // Initialize
         initializeChart();
         updateDisplays();
         updateDelay();
+        renderBuilds();
     </script>
 </body>
 </html>
