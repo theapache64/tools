@@ -5,6 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Battery Life Calculator</title>
     <style>
+        /* Neo Brutalist Design System */
+        :root {
+            --background: #ffffff;
+            --foreground: #000000;
+            --primary: #ff3e41;
+            --secondary: #3633ff;
+            --accent: #ffde59;
+            --neutral: #e0e0e0;
+            --border-width: 3px;
+            --shadow-offset: 6px;
+            --box-shadow: 6px 6px 0 0 #000000;
+            --border-radius: 2px;
+            --font-family: 'Courier New', monospace;
+        }
+
+        .dark {
+            --background: #0f0f0f;
+            --foreground: #ffffff;
+            --primary: #ff5e54;
+            --secondary: #4d4aff;
+            --accent: #ffe066;
+            --neutral: #333333;
+            --box-shadow: 6px 6px 0 0 #ffffff;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,53 +37,83 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
             min-height: 100vh;
             padding: 20px;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            background: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            overflow: visible;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary);
             color: white;
             padding: 30px;
             text-align: center;
+            border-bottom: var(--border-width) solid var(--foreground);
         }
 
         .header h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
-            font-weight: 600;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
         }
 
         .header p {
             font-size: 1.1rem;
-            opacity: 0.9;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
         .content {
             padding: 40px;
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .input-column {
+            flex: 1;
+            min-width: 400px;
+        }
+
+        .output-column {
+            flex: 1;
+            min-width: 400px;
         }
 
         .input-section {
             margin-bottom: 30px;
+            background: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-section:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
         }
 
         .section-title {
             font-size: 1.4rem;
-            color: #333;
+            color: var(--foreground);
             margin-bottom: 20px;
-            font-weight: 600;
-            border-bottom: 2px solid #667eea;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            border-bottom: var(--border-width) solid var(--foreground);
             padding-bottom: 10px;
         }
 
@@ -85,56 +140,79 @@
         label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 500;
-            color: #333;
+            font-weight: 800;
+            color: var(--foreground);
+            text-transform: uppercase;
+            font-size: 0.9rem;
         }
 
         input, select {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
+            border: var(--border-width) solid var(--foreground);
+            border-radius: var(--border-radius);
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            background: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            font-weight: bold;
+            transition: all 0.2s ease;
         }
 
         input:focus, select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 4px 4px 0 0 var(--foreground);
+            transform: translate(-2px, -2px);
+        }
+
+        input:read-only {
+            background: var(--neutral);
+            color: var(--foreground);
+            opacity: 0.8;
         }
 
         .help-text {
-            font-size: 0.9rem;
-            color: #666;
+            font-size: 0.85rem;
+            color: var(--foreground);
             margin-top: 5px;
-            font-style: italic;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
         .battery-info {
-            background: #f8f9fa;
+            background: var(--neutral);
             padding: 15px;
-            border-radius: 10px;
+            border: var(--border-width) solid var(--foreground);
             margin-top: 10px;
         }
 
         .calculations {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: var(--secondary);
             color: white;
             padding: 30px;
-            border-radius: 15px;
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
             margin-bottom: 30px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .calculations:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
         }
 
         .calculations h3 {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             margin-bottom: 20px;
             text-align: center;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
         }
 
         .calc-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -142,39 +220,58 @@
         .calc-item {
             background: rgba(255, 255, 255, 0.2);
             padding: 15px;
-            border-radius: 10px;
+            border: var(--border-width) solid white;
             text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .calc-item:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0 0 white;
         }
 
         .calc-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
+            font-size: 0.85rem;
             margin-bottom: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
         .calc-value {
-            font-size: 1.3rem;
-            font-weight: 600;
+            font-size: 1.4rem;
+            font-weight: 800;
         }
 
         .result {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
+            background: var(--accent);
+            color: var(--foreground);
             padding: 30px;
-            border-radius: 15px;
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
             text-align: center;
             margin-bottom: 30px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .result:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
         }
 
         .result h3 {
-            font-size: 1.8rem;
+            font-size: 2rem;
             margin-bottom: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
         }
 
         .result-main {
             font-size: 1.4rem;
             margin-bottom: 20px;
             line-height: 1.5;
+            font-weight: bold;
         }
 
         .result-breakdown {
@@ -185,45 +282,78 @@
         }
 
         .result-item {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.1);
             padding: 15px;
-            border-radius: 10px;
+            border: var(--border-width) solid var(--foreground);
+            transition: all 0.2s ease;
+        }
+
+        .result-item:hover {
+            background: rgba(0, 0, 0, 0.2);
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0 0 var(--foreground);
         }
 
         .result-number {
-            font-size: 1.5rem;
-            font-weight: 600;
+            font-size: 1.6rem;
+            font-weight: 800;
             display: block;
+            color: var(--foreground);
         }
 
         .result-unit {
             font-size: 0.9rem;
-            opacity: 0.9;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--foreground);
         }
 
         .reset-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary);
             color: white;
-            border: none;
+            border: var(--border-width) solid var(--foreground);
             padding: 15px 30px;
-            border-radius: 10px;
             font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            font-family: var(--font-family);
+            box-shadow: var(--box-shadow);
+            transition: all 0.2s ease;
             width: 100%;
         }
 
         .reset-btn:hover {
-            transform: translateY(-2px);
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .reset-btn:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 0 var(--foreground);
         }
 
         .warning {
-            background: #fff3cd;
-            color: #856404;
+            background: var(--accent);
+            color: var(--foreground);
             padding: 10px 15px;
-            border-radius: 5px;
+            border: var(--border-width) solid var(--foreground);
             margin-top: 10px;
             font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .input-column, .output-column {
+                min-width: auto;
+                width: 100%;
+            }
         }
 
         @media (max-width: 768px) {
@@ -247,6 +377,14 @@
             .header h1 {
                 font-size: 2rem;
             }
+
+            .container {
+                margin: 10px;
+            }
+
+            body {
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -254,152 +392,191 @@
     <div class="container">
         <div class="header">
             <h1>🔋 Battery Life Calculator</h1>
-            <p>Calculate how long your circuit will run on a 1.5V AA battery</p>
+            <p>Calculate how long your circuit will run on any battery type</p>
         </div>
 
         <div class="content">
-            <!-- Battery Selection -->
-            <div class="input-section">
-                <h3 class="section-title">Battery Selection</h3>
-                <div class="input-group">
-                    <div class="input-row single">
-                        <div class="input-field">
-                            <label for="batteryBrand">Battery Brand/Type:</label>
-                            <select id="batteryBrand">
-                                <option value="duracell-ultra">Duracell Ultra AA (2,800mAh)</option>
-                                <option value="duracell-coppertop">Duracell CopperTop AA (2,500mAh)</option>
-                                <option value="energizer-max">Energizer Max AA (2,850mAh)</option>
-                                <option value="energizer-ultimate">Energizer Ultimate Lithium AA (3,500mAh)</option>
-                                <option value="eveready">Eveready AA (2,100mAh)</option>
-                                <option value="kirkland">Kirkland Signature AA (2,400mAh)</option>
-                                <option value="rayovac">Rayovac AA (2,200mAh)</option>
-                                <option value="custom">Custom (Enter manually)</option>
-                            </select>
+            <!-- Left Column - Inputs -->
+            <div class="input-column">
+                <!-- Battery Selection -->
+                <div class="input-section">
+                    <h3 class="section-title">Battery Selection</h3>
+                    <div class="input-group">
+                        <div class="input-row single">
+                            <div class="input-field">
+                                <label for="batteryBrand">Battery Brand/Type:</label>
+                                <select id="batteryBrand">
+                                    <optgroup label="AA Batteries">
+                                        <option value="duracell-ultra-aa">Duracell Ultra AA (2,800mAh, 1.5V)</option>
+                                        <option value="duracell-coppertop-aa">Duracell CopperTop AA (2,500mAh, 1.5V)</option>
+                                        <option value="energizer-max-aa">Energizer Max AA (2,850mAh, 1.5V)</option>
+                                        <option value="energizer-ultimate-aa">Energizer Ultimate Lithium AA (3,500mAh, 1.5V)</option>
+                                        <option value="eveready-aa">Eveready AA (2,100mAh, 1.5V)</option>
+                                        <option value="kirkland-aa">Kirkland Signature AA (2,400mAh, 1.5V)</option>
+                                        <option value="rayovac-aa">Rayovac AA (2,200mAh, 1.5V)</option>
+                                    </optgroup>
+                                    <optgroup label="AAA Batteries">
+                                        <option value="duracell-aaa">Duracell AAA (1,000mAh, 1.5V)</option>
+                                        <option value="energizer-aaa">Energizer AAA (1,200mAh, 1.5V)</option>
+                                    </optgroup>
+                                    <optgroup label="9V Batteries">
+                                        <option value="duracell-9v">Duracell 9V (550mAh, 9.0V)</option>
+                                        <option value="energizer-9v">Energizer 9V (625mAh, 9.0V)</option>
+                                        <option value="eveready-9v">Eveready 9V (500mAh, 9.0V)</option>
+                                    </optgroup>
+                                    <optgroup label="Specialty Batteries">
+                                        <option value="cr2032">CR2032 Coin Cell (240mAh, 3.0V)</option>
+                                        <option value="cr123a">CR123A Lithium (1,500mAh, 3.0V)</option>
+                                    </optgroup>
+                                    <optgroup label="Custom">
+                                        <option value="custom">Custom (Enter manually)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="batteryCapacity">Battery Capacity (mAh):</label>
+                                <input type="number" id="batteryCapacity" value="2800" min="1" step="1">
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="batteryVoltage">Battery Voltage (V):</label>
+                                <input type="number" id="batteryVoltage" value="1.5" step="0.1" min="0.1">
+                                <div class="help-text">Battery voltage affects power calculations</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="input-row">
-                        <div class="input-field">
-                            <label for="batteryCapacity">Battery Capacity (mAh):</label>
-                            <input type="number" id="batteryCapacity" value="2800" min="1" step="1">
+                </div>
+
+                <!-- Current Input -->
+                <div class="input-section">
+                    <h3 class="section-title">Current Consumption</h3>
+                    <div class="input-group">
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="currentDraw">Current Draw (mA):</label>
+                                <input type="number" id="currentDraw" value="2" min="0.001" step="0.001">
+                                <div class="help-text">Enter the current drawn when the circuit is ON</div>
+                            </div>
                         </div>
-                        <div class="input-field">
-                            <label for="batteryVoltage">Battery Voltage (V):</label>
-                            <input type="number" id="batteryVoltage" value="1.5" step="0.1" readonly>
-                            <div class="help-text">Standard AA battery voltage (for reference only)</div>
+                    </div>
+                </div>
+
+                <!-- Pulse Timing -->
+                <div class="input-section">
+                    <h3 class="section-title">Pulse Timing</h3>
+                    <div class="input-group">
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="pulseInterval">Interval (seconds):</label>
+                                <input type="number" id="pulseInterval" value="5" min="0.001" step="0.001">
+                                <div class="help-text">How often the current pulse occurs</div>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="pulseDuration">Pulse Duration (seconds):</label>
+                                <input type="number" id="pulseDuration" value="0.1" min="0.001" step="0.001">
+                                <div class="help-text">How long each current pulse lasts</div>
+                            </div>
+                        </div>
+                        <div class="help-text">
+                            <strong>Example:</strong> A sensor that draws 2mA for 0.1 seconds every 5 seconds
+                        </div>
+                        <div id="pulseWarning" class="warning" style="display: none;">
+                            ⚠️ Pulse duration cannot be longer than the interval
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <button class="reset-btn" onclick="resetToDefaults()">🔄 Reset to Defaults</button>
+            </div>
+
+            <!-- Right Column - Outputs -->
+            <div class="output-column">
+                <!-- Calculations Display -->
+                <div class="calculations">
+                    <h3>📊 Calculations</h3>
+                    <div class="calc-grid">
+                        <div class="calc-item">
+                            <div class="calc-label">Duty Cycle</div>
+                            <div class="calc-value" id="dutyCycle">2.0%</div>
+                        </div>
+                        <div class="calc-item">
+                            <div class="calc-label">Average Current</div>
+                            <div class="calc-value" id="avgCurrent">0.04 mA</div>
+                        </div>
+                        <div class="calc-item">
+                            <div class="calc-label">Battery Voltage</div>
+                            <div class="calc-value" id="displayVoltage">1.5 V</div>
+                        </div>
+                        <div class="calc-item">
+                            <div class="calc-label">Battery Capacity</div>
+                            <div class="calc-value" id="displayCapacity">2,800 mAh</div>
+                        </div>
+                        <div class="calc-item">
+                            <div class="calc-label">Battery Life</div>
+                            <div class="calc-value" id="batteryLifeHours">70,000 hours</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="result">
+                    <h3>⏱️ Battery Life Results</h3>
+                    <div class="result-main" id="resultMain">
+                        Your circuit will run for <strong>7.99 years</strong> on a single Duracell Ultra AA battery.
+                    </div>
+                    <div class="result-breakdown">
+                        <div class="result-item">
+                            <span class="result-number" id="resultYears">7.99</span>
+                            <span class="result-unit">Years</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-number" id="resultMonths">95.9</span>
+                            <span class="result-unit">Months</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-number" id="resultDays">2,917</span>
+                            <span class="result-unit">Days</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-number" id="resultHours">70,000</span>
+                            <span class="result-unit">Hours</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Current Input -->
-            <div class="input-section">
-                <h3 class="section-title">Current Consumption</h3>
-                <div class="input-group">
-                    <div class="input-row">
-                        <div class="input-field">
-                            <label for="currentDraw">Current Draw (mA):</label>
-                            <input type="number" id="currentDraw" value="2" min="0.001" step="0.001">
-                            <div class="help-text">Enter the current drawn when the circuit is ON</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pulse Timing -->
-            <div class="input-section">
-                <h3 class="section-title">Pulse Timing</h3>
-                <div class="input-group">
-                    <div class="input-row">
-                        <div class="input-field">
-                            <label for="pulseInterval">Interval (seconds):</label>
-                            <input type="number" id="pulseInterval" value="5" min="0.001" step="0.001">
-                            <div class="help-text">How often the current pulse occurs</div>
-                        </div>
-                        <div class="input-field">
-                            <label for="pulseDuration">Pulse Duration (seconds):</label>
-                            <input type="number" id="pulseDuration" value="0.1" min="0.001" step="0.001">
-                            <div class="help-text">How long each current pulse lasts</div>
-                        </div>
-                    </div>
-                    <div class="help-text">
-                        <strong>Example:</strong> A sensor that draws 2mA for 0.1 seconds every 5 seconds
-                    </div>
-                    <div id="pulseWarning" class="warning" style="display: none;">
-                        ⚠️ Pulse duration cannot be longer than the interval
-                    </div>
-                </div>
-            </div>
-
-            <!-- Calculations Display -->
-            <div class="calculations">
-                <h3>📊 Calculations</h3>
-                <div class="calc-grid">
-                    <div class="calc-item">
-                        <div class="calc-label">Duty Cycle</div>
-                        <div class="calc-value" id="dutyCycle">2.0%</div>
-                    </div>
-                    <div class="calc-item">
-                        <div class="calc-label">Average Current</div>
-                        <div class="calc-value" id="avgCurrent">0.04 mA</div>
-                    </div>
-                    <div class="calc-item">
-                        <div class="calc-label">Battery Capacity</div>
-                        <div class="calc-value" id="displayCapacity">2,800 mAh</div>
-                    </div>
-                    <div class="calc-item">
-                        <div class="calc-label">Battery Life</div>
-                        <div class="calc-value" id="batteryLifeHours">70,000 hours</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Results -->
-            <div class="result">
-                <h3>⏱️ Battery Life Results</h3>
-                <div class="result-main" id="resultMain">
-                    Your circuit will run for <strong>7.99 years</strong> on a single Duracell Ultra AA battery.
-                </div>
-                <div class="result-breakdown">
-                    <div class="result-item">
-                        <span class="result-number" id="resultYears">7.99</span>
-                        <span class="result-unit">Years</span>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-number" id="resultMonths">95.9</span>
-                        <span class="result-unit">Months</span>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-number" id="resultDays">2,917</span>
-                        <span class="result-unit">Days</span>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-number" id="resultHours">70,000</span>
-                        <span class="result-unit">Hours</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reset Button -->
-            <button class="reset-btn" onclick="resetToDefaults()">🔄 Reset to Defaults</button>
         </div>
     </div>
 
     <script>
         // Battery configurations
         const batteryConfigs = {
-            'duracell-ultra': { name: 'Duracell Ultra AA', capacity: 2800 },
-            'duracell-coppertop': { name: 'Duracell CopperTop AA', capacity: 2500 },
-            'energizer-max': { name: 'Energizer Max AA', capacity: 2850 },
-            'energizer-ultimate': { name: 'Energizer Ultimate Lithium AA', capacity: 3500 },
-            'eveready': { name: 'Eveready AA', capacity: 2100 },
-            'kirkland': { name: 'Kirkland Signature AA', capacity: 2400 },
-            'rayovac': { name: 'Rayovac AA', capacity: 2200 },
-            'custom': { name: 'Custom', capacity: 2800 }
+            'duracell-ultra-aa': { name: 'Duracell Ultra AA', capacity: 2800, voltage: 1.5 },
+            'duracell-coppertop-aa': { name: 'Duracell CopperTop AA', capacity: 2500, voltage: 1.5 },
+            'energizer-max-aa': { name: 'Energizer Max AA', capacity: 2850, voltage: 1.5 },
+            'energizer-ultimate-aa': { name: 'Energizer Ultimate Lithium AA', capacity: 3500, voltage: 1.5 },
+            'eveready-aa': { name: 'Eveready AA', capacity: 2100, voltage: 1.5 },
+            'kirkland-aa': { name: 'Kirkland Signature AA', capacity: 2400, voltage: 1.5 },
+            'rayovac-aa': { name: 'Rayovac AA', capacity: 2200, voltage: 1.5 },
+            'duracell-9v': { name: 'Duracell 9V', capacity: 550, voltage: 9.0 },
+            'energizer-9v': { name: 'Energizer 9V', capacity: 625, voltage: 9.0 },
+            'eveready-9v': { name: 'Eveready 9V', capacity: 500, voltage: 9.0 },
+            'duracell-aaa': { name: 'Duracell AAA', capacity: 1000, voltage: 1.5 },
+            'energizer-aaa': { name: 'Energizer AAA', capacity: 1200, voltage: 1.5 },
+            'cr2032': { name: 'CR2032 Coin Cell', capacity: 240, voltage: 3.0 },
+            'cr123a': { name: 'CR123A Lithium', capacity: 1500, voltage: 3.0 },
+            'custom': { name: 'Custom', capacity: 2800, voltage: 1.5 }
         };
 
         // Get DOM elements
         const batteryBrand = document.getElementById('batteryBrand');
         const batteryCapacity = document.getElementById('batteryCapacity');
+        const batteryVoltage = document.getElementById('batteryVoltage');
         const currentDraw = document.getElementById('currentDraw');
         const pulseInterval = document.getElementById('pulseInterval');
         const pulseDuration = document.getElementById('pulseDuration');
@@ -408,6 +585,7 @@
         // Result elements
         const dutyCycle = document.getElementById('dutyCycle');
         const avgCurrent = document.getElementById('avgCurrent');
+        const displayVoltage = document.getElementById('displayVoltage');
         const displayCapacity = document.getElementById('displayCapacity');
         const batteryLifeHours = document.getElementById('batteryLifeHours');
         const resultMain = document.getElementById('resultMain');
@@ -419,6 +597,7 @@
         // Event listeners
         batteryBrand.addEventListener('change', onBatteryBrandChange);
         batteryCapacity.addEventListener('input', calculateBatteryLife);
+        batteryVoltage.addEventListener('input', calculateBatteryLife);
         currentDraw.addEventListener('input', validateAndCalculate);
         pulseInterval.addEventListener('input', validateAndCalculate);
         pulseDuration.addEventListener('input', validateAndCalculate);
@@ -429,9 +608,12 @@
             
             if (selectedBrand !== 'custom') {
                 batteryCapacity.value = config.capacity;
+                batteryVoltage.value = config.voltage;
                 batteryCapacity.readOnly = true;
+                batteryVoltage.readOnly = true;
             } else {
                 batteryCapacity.readOnly = false;
+                batteryVoltage.readOnly = false;
                 batteryCapacity.focus();
             }
             
@@ -454,10 +636,12 @@
             // Check if pulse duration is not longer than interval
             if (duration > interval) {
                 pulseWarning.style.display = 'block';
-                pulseDuration.style.borderColor = '#dc3545';
+                pulseDuration.style.borderColor = 'var(--primary)';
+                pulseDuration.style.borderWidth = 'var(--border-width)';
             } else {
                 pulseWarning.style.display = 'none';
-                pulseDuration.style.borderColor = '#e1e5e9';
+                pulseDuration.style.borderColor = 'var(--foreground)';
+                pulseDuration.style.borderWidth = 'var(--border-width)';
             }
 
             calculateBatteryLife();
@@ -467,13 +651,14 @@
             try {
                 // Get input values
                 const capacity = parseFloat(batteryCapacity.value);
+                const voltage = parseFloat(batteryVoltage.value);
                 const current = parseFloat(currentDraw.value);
                 const interval = parseFloat(pulseInterval.value);
                 const duration = parseFloat(pulseDuration.value);
 
                 // Validate inputs
-                if (isNaN(capacity) || isNaN(current) || isNaN(interval) || isNaN(duration) ||
-                    capacity <= 0 || current <= 0 || interval <= 0 || duration <= 0) {
+                if (isNaN(capacity) || isNaN(voltage) || isNaN(current) || isNaN(interval) || isNaN(duration) ||
+                    capacity <= 0 || voltage <= 0 || current <= 0 || interval <= 0 || duration <= 0) {
                     return;
                 }
 
@@ -499,6 +684,7 @@
                 // Update display elements
                 dutyCycle.textContent = `${dutyCyclePercent.toFixed(2)}%`;
                 avgCurrent.textContent = `${avgCurrentValue.toFixed(3)} mA`;
+                displayVoltage.textContent = `${voltage.toFixed(1)} V`;
                 displayCapacity.textContent = `${capacity.toLocaleString()} mAh`;
                 batteryLifeHours.textContent = `${Math.round(batteryLifeHoursValue).toLocaleString()} hours`;
 
@@ -531,14 +717,17 @@
         }
 
         function resetToDefaults() {
-            batteryBrand.value = 'duracell-ultra';
+            batteryBrand.value = 'duracell-ultra-aa';
             batteryCapacity.value = 2800;
+            batteryVoltage.value = 1.5;
             batteryCapacity.readOnly = true;
+            batteryVoltage.readOnly = true;
             currentDraw.value = 2;
             pulseInterval.value = 5;
             pulseDuration.value = 0.1;
             pulseWarning.style.display = 'none';
-            pulseDuration.style.borderColor = '#e1e5e9';
+            pulseDuration.style.borderColor = 'var(--foreground)';
+            pulseDuration.style.borderWidth = 'var(--border-width)';
             currentDraw.setCustomValidity('');
             calculateBatteryLife();
         }

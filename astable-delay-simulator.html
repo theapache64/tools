@@ -1126,7 +1126,8 @@
             {c1: 1000, c2: 47, r1: 22, r2: 560000, r3: 2200, r4: 2200, delay: 3742},
             {c1: 1000, c2: 47, r1: 22, r2: 560000, r3: 2200, r4: 1000, delay: 5051},
             {c1: 1000, c2: 100, r1: 22, r2: 560000, r3: 1000, r4: 1000, delay: 22234},
-            {c1: 1000, c2: 100, r1: 22, r2: 560000, r3: 100000, r4: 1000, delay: 23731}
+            {c1: 1000, c2: 100, r1: 22, r2: 560000, r3: 100000, r4: 1000, delay: 23731},
+            {c1: 1000, c2: 10, r1: 22, r2: 1570000, r3: 1000, r4: 1000, delay: 6800}
         ];
 
         const led = document.getElementById('led');
@@ -1537,31 +1538,34 @@
         // Calculate power consumption and battery life
         function calculatePowerConsumption(c2, r2, r3, r4, blinkRate, isDayMode) {
             const batteryVoltage = 1.5; // 1.5V AA battery
-            const batteryCapacity = 2750; // mAh for AA alkaline battery (2700-2850 mAh typical)
+            const batteryCapacity = 2800; // mAh for AA alkaline battery (using Duracell Ultra AA capacity)
             
-            // Realistic astable multivibrator current consumption
-            // The circuit itself consumes very little power - most power goes to the LED
-            const quiescentCurrentMa = 0.5; // Very low quiescent current for astable multivibrator (< 1mA typically)
+            // Circuit specifications
+            const quiescentCurrentMa = 0.5; // Very low quiescent current for astable multivibrator
+            const ledCurrentMa = 20; // LED current when on
+            const ledOnDurationMs = 100; // LED is on for 100ms per blink
             
-            // LED specifications
-            const ledCurrentMa = 20; // User specified 20mA LED
+            // Calculate timing based on actual delay
+            const delayMs = 1000 / blinkRate; // Convert blink rate to delay in ms
+            const cycleTimeMs = delayMs; // Total cycle time
             
-            // LED duty cycle (100ms on out of total cycle time)
-            const ledOnTime = 0.1; // 100ms = 0.1 seconds
-            const cycleTime = 1 / blinkRate; // Total cycle time in seconds
-            const ledDutyCycle = Math.min(ledOnTime / cycleTime, 1); // Cap at 100%
+            // Calculate duty cycle correctly: LED on time / total cycle time
+            const dutyCycle = Math.min(ledOnDurationMs / cycleTimeMs, 1); // Cap at 100%
             
-            // Average LED current over time (this is the main power consumer)
-            const avgLedCurrentMa = ledCurrentMa * ledDutyCycle;
-            
-            // Total average current consumption (LED dominates)
+            // Calculate average current using proper duty cycle formula
+            const avgLedCurrentMa = ledCurrentMa * dutyCycle;
             const totalCurrentMa = quiescentCurrentMa + avgLedCurrentMa;
-            const avgPowerMw = totalCurrentMa * batteryVoltage; // Power in mW
             
-            // Battery life calculation with proper AA capacity
-            const hoursPerDay = isDayMode ? 12 : 24;
-            const dailyCurrentMa = totalCurrentMa * (hoursPerDay / 24);
-            const batteryLifeHours = batteryCapacity / dailyCurrentMa;
+            // Apply day mode factor to operating hours (not to current)
+            const operatingHoursPerDay = isDayMode ? 12 : 24;
+            const operatingDutyCycle = operatingHoursPerDay / 24;
+            
+            // Calculate effective average current over 24 hours
+            const effectiveAvgCurrentMa = totalCurrentMa * operatingDutyCycle;
+            
+            // Calculate battery life using correct formula: capacity / average_current
+            const batteryLifeHours = batteryCapacity / effectiveAvgCurrentMa;
+            const avgPowerMw = totalCurrentMa * batteryVoltage;
             
             // Format battery life
             let batteryLife;
