@@ -371,6 +371,63 @@
             background: var(--foreground);
         }
 
+        /* Battery configuration styles */
+        .battery-config {
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: var(--neutral);
+            border: var(--border-width) solid var(--foreground);
+        }
+
+        .config-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .config-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .config-field {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .config-field label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--foreground);
+        }
+
+        .config-field select,
+        .config-field input {
+            width: 100%;
+            padding: 0.5rem;
+            border: var(--border-width) solid var(--foreground);
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .config-field select:focus,
+        .config-field input:focus {
+            outline: none;
+            box-shadow: 2px 2px 0 0 var(--foreground);
+            transform: translate(-1px, -1px);
+        }
+
+        .config-field input:read-only {
+            background-color: var(--neutral);
+            opacity: 0.8;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -858,6 +915,15 @@
             .input-title, .output-title {
                 font-size: 1.25rem;
             }
+            
+            .config-row {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .config-field {
+                min-width: unset;
+            }
         }
     </style>
 </head>
@@ -889,9 +955,9 @@
                         <label for="c2">C2</label>
                         <div class="slider-container">
                             <div class="slider-wrapper">
-                                <input type="range" id="c2" min="0" max="31" value="16" step="1">
+                                <input type="range" id="c2" min="0" max="31" value="12" step="1">
                             </div>
-                            <div class="value-display" id="c2-value">22µF</div>
+                            <div class="value-display" id="c2-value">10µF</div>
                         </div>
                     </div>
 
@@ -909,9 +975,9 @@
                         <label for="r2">R2</label>
                         <div class="slider-container">
                             <div class="slider-wrapper">
-                                <input type="range" id="r2" min="0" max="167" value="138" step="1">
+                                <input type="range" id="r2" min="0" max="167" value="148" step="1">
                             </div>
-                            <div class="value-display" id="r2-value">560kΩ</div>
+                            <div class="value-display" id="r2-value">1.5MΩ</div>
                         </div>
                     </div>
 
@@ -970,9 +1036,41 @@
                         <div class="stats-header">
                             <div class="stats-title">Blink Statistics</div>
                             <label class="day-mode-toggle">
-                                <input type="checkbox" id="day-mode-toggle">
+                                <input type="checkbox" id="day-mode-toggle" checked>
                                 <span class="toggle-text">12-hour operation (LDR)</span>
                             </label>
+                        </div>
+                        
+                        <!-- Battery and Current Configuration -->
+                        <div class="battery-config">
+                            <div class="config-row">
+                                <div class="config-field">
+                                    <label for="battery-select">Battery Type:</label>
+                                    <select id="battery-select">
+                                        <optgroup label="AA Batteries">
+                                            <option value="duracell-ultra-aa" selected>Duracell Ultra AA (1,500mAh, 1.5V)</option>
+                                            <option value="eveready-aa">Eveready AA (540mAh, 1.5V)</option>
+                                        </optgroup>
+                                        <optgroup label="Custom">
+                                            <option value="custom">Custom (Enter manually)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="config-row">
+                                <div class="config-field">
+                                    <label for="current-draw">LED Current Draw (mA):</label>
+                                    <input type="number" id="current-draw" value="0.7" min="0.1" step="0.1">
+                                </div>
+                                <div class="config-field">
+                                    <label for="battery-capacity">Capacity (mAh):</label>
+                                    <input type="number" id="battery-capacity" value="1500" min="1" step="1" readonly>
+                                </div>
+                                <div class="config-field">
+                                    <label for="battery-voltage">Voltage (V):</label>
+                                    <input type="number" id="battery-voltage" value="1.5" step="0.1" min="0.1" readonly>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="stats-grid">
@@ -1016,8 +1114,29 @@
                                 <span class="extra-value" id="power-consumption">--</span>
                             </div>
                             <div class="extra-stat battery-life">
-                                <span class="extra-label">With 1.5V AA battery, this will run for:</span>
+                                <span class="extra-label" id="battery-life-label">With selected battery, this will run for:</span>
                                 <span class="extra-value" id="battery-life">--</span>
+                            </div>
+                            <div class="extra-stat">
+                                <span class="extra-label">Battery life breakdown:</span>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                                    <div style="background: rgba(0,0,0,0.1); padding: 0.5rem; border: 1px solid var(--foreground); text-align: center;">
+                                        <div style="font-weight: bold; font-size: 1.1rem;" id="battery-life-hours">--</div>
+                                        <div style="font-size: 0.8rem; text-transform: uppercase;">Hours</div>
+                                    </div>
+                                    <div style="background: rgba(0,0,0,0.1); padding: 0.5rem; border: 1px solid var(--foreground); text-align: center;">
+                                        <div style="font-weight: bold; font-size: 1.1rem;" id="battery-life-days">--</div>
+                                        <div style="font-size: 0.8rem; text-transform: uppercase;">Days</div>
+                                    </div>
+                                    <div style="background: rgba(0,0,0,0.1); padding: 0.5rem; border: 1px solid var(--foreground); text-align: center;">
+                                        <div style="font-weight: bold; font-size: 1.1rem;" id="battery-life-months">--</div>
+                                        <div style="font-size: 0.8rem; text-transform: uppercase;">Months</div>
+                                    </div>
+                                    <div style="background: rgba(0,0,0,0.1); padding: 0.5rem; border: 1px solid var(--foreground); text-align: center;">
+                                        <div style="font-weight: bold; font-size: 1.1rem;" id="battery-life-years">--</div>
+                                        <div style="font-size: 0.8rem; text-transform: uppercase;">Years</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1068,6 +1187,13 @@
                 localStorage.setItem('theme', 'light');
             }
         });
+
+        // Battery configurations (from battery life calculator)
+        const batteryConfigs = {
+            'duracell-ultra-aa': { name: 'Duracell Ultra AA', capacity: 1500, voltage: 1.5 },
+            'eveready-aa': { name: 'Eveready AA', capacity: 540, voltage: 1.5 },
+            'custom': { name: 'Custom', capacity: 1500, voltage: 1.5 }
+        };
 
         // Standard component values
         const capacitorValues = [
@@ -1135,6 +1261,13 @@
         const delayDisplay = document.getElementById('delay-value');
         const chartBars = document.getElementById('chart-bars');
         const dayModeToggle = document.getElementById('day-mode-toggle');
+        
+        // Battery and current controls
+        const batterySelect = document.getElementById('battery-select');
+        const currentDraw = document.getElementById('current-draw');
+        const batteryCapacity = document.getElementById('battery-capacity');
+        const batteryVoltage = document.getElementById('battery-voltage');
+        const batteryLifeLabel = document.getElementById('battery-life-label');
         
         const c2Slider = document.getElementById('c2');
         const r2Slider = document.getElementById('r2');
@@ -1533,16 +1666,23 @@
             document.getElementById('led-on-time').textContent = `${ledOnTimePerHour}s`;
             document.getElementById('power-consumption').textContent = powerStats.avgPowerMw + ' mW';
             document.getElementById('battery-life').textContent = powerStats.batteryLife;
+            
+            // Update detailed battery life breakdown
+            document.getElementById('battery-life-hours').textContent = powerStats.batteryLifeHours;
+            document.getElementById('battery-life-days').textContent = powerStats.batteryLifeDays;
+            document.getElementById('battery-life-months').textContent = powerStats.batteryLifeMonths;
+            document.getElementById('battery-life-years').textContent = powerStats.batteryLifeYears;
         }
 
         // Calculate power consumption and battery life
         function calculatePowerConsumption(c2, r2, r3, r4, blinkRate, isDayMode) {
-            const batteryVoltage = 1.5; // 1.5V AA battery
-            const batteryCapacity = 2800; // mAh for AA alkaline battery (using Duracell Ultra AA capacity)
+            // Get current battery and current settings
+            const currentBatteryVoltage = parseFloat(batteryVoltage.value) || 1.5;
+            const currentBatteryCapacity = parseFloat(batteryCapacity.value) || 2800;
+            const ledCurrentMa = parseFloat(currentDraw.value) || 0.7;
             
             // Circuit specifications
             const quiescentCurrentMa = 0.5; // Very low quiescent current for astable multivibrator
-            const ledCurrentMa = 20; // LED current when on
             const ledOnDurationMs = 100; // LED is on for 100ms per blink
             
             // Calculate timing based on actual delay
@@ -1564,27 +1704,35 @@
             const effectiveAvgCurrentMa = totalCurrentMa * operatingDutyCycle;
             
             // Calculate battery life using correct formula: capacity / average_current
-            const batteryLifeHours = batteryCapacity / effectiveAvgCurrentMa;
-            const avgPowerMw = totalCurrentMa * batteryVoltage;
+            const batteryLifeHours = currentBatteryCapacity / effectiveAvgCurrentMa;
+            const avgPowerMw = effectiveAvgCurrentMa * currentBatteryVoltage;
             
-            // Format battery life
+            // Convert to other time units with proper decimals
+            const days = batteryLifeHours / 24;
+            const months = days / 30;
+            const years = days / 365;
+            
+            // Format battery life (main display)
             let batteryLife;
-            if (batteryLifeHours < 24) {
-                batteryLife = `${Math.round(batteryLifeHours)} hours`;
-            } else if (batteryLifeHours < 24 * 7) {
-                batteryLife = `${Math.round(batteryLifeHours / 24)} days`;
-            } else if (batteryLifeHours < 24 * 30) {
-                batteryLife = `${Math.round(batteryLifeHours / (24 * 7))} weeks`;
-            } else if (batteryLifeHours < 24 * 365) {
-                batteryLife = `${Math.round(batteryLifeHours / (24 * 30))} months`;
+            if (years >= 1) {
+                batteryLife = `${years.toFixed(2)} years`;
+            } else if (months >= 1) {
+                batteryLife = `${months.toFixed(1)} months`;
+            } else if (days >= 1) {
+                batteryLife = `${Math.round(days)} days`;
             } else {
-                batteryLife = `${Math.round(batteryLifeHours / (24 * 365))} years`;
+                batteryLife = `${Math.round(batteryLifeHours)} hours`;
             }
             
             return {
                 avgPowerMw: avgPowerMw.toFixed(1),
                 batteryLife: batteryLife,
-                currentMa: totalCurrentMa.toFixed(1)
+                currentMa: totalCurrentMa.toFixed(1),
+                // Detailed breakdown with proper precision
+                batteryLifeHours: Math.round(batteryLifeHours).toLocaleString(),
+                batteryLifeDays: Math.round(days).toLocaleString(),
+                batteryLifeMonths: months.toFixed(1),
+                batteryLifeYears: years.toFixed(2)
             };
         }
 
@@ -1704,6 +1852,45 @@
             }, delay);
         }
 
+        // Battery selection change handler
+        function onBatterySelectionChange() {
+            const selectedBattery = batterySelect.value;
+            const config = batteryConfigs[selectedBattery];
+            
+            if (selectedBattery !== 'custom') {
+                batteryCapacity.value = config.capacity;
+                batteryVoltage.value = config.voltage;
+                batteryCapacity.readOnly = true;
+                batteryVoltage.readOnly = true;
+            } else {
+                batteryCapacity.readOnly = false;
+                batteryVoltage.readOnly = false;
+                batteryCapacity.focus();
+            }
+            
+            // Update battery life label
+            batteryLifeLabel.textContent = `With ${config.name}, this will run for:`;
+            
+            // Recalculate statistics with new battery
+            const delay = parseInt(delayDisplay.textContent);
+            updateStatistics(delay);
+        }
+
+        // Event listeners for battery and current controls
+        batterySelect.addEventListener('change', onBatterySelectionChange);
+        currentDraw.addEventListener('input', () => {
+            const delay = parseInt(delayDisplay.textContent);
+            updateStatistics(delay);
+        });
+        batteryCapacity.addEventListener('input', () => {
+            const delay = parseInt(delayDisplay.textContent);
+            updateStatistics(delay);
+        });
+        batteryVoltage.addEventListener('input', () => {
+            const delay = parseInt(delayDisplay.textContent);
+            updateStatistics(delay);
+        });
+
         // Event listeners for sliders
         c2Slider.addEventListener('input', () => {
             updateDisplays();
@@ -1743,6 +1930,7 @@
         // Initialize
         initializeChart();
         updateDisplays();
+        onBatterySelectionChange(); // Set up default battery
         updateDelay();
         renderBuilds();
     </script>

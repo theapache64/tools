@@ -457,7 +457,7 @@
                         <div class="input-row">
                             <div class="input-field">
                                 <label for="currentDraw">Current Draw (mA):</label>
-                                <input type="number" id="currentDraw" value="2" min="0.001" step="0.001">
+                                <input type="number" id="currentDraw" value="0.7" min="0.001" step="0.001">
                                 <div class="help-text">Enter the current drawn when the circuit is ON</div>
                             </div>
                         </div>
@@ -483,10 +483,26 @@
                             </div>
                         </div>
                         <div class="help-text">
-                            <strong>Example:</strong> A sensor that draws 2mA for 0.1 seconds every 5 seconds
+                            <strong>Example:</strong> A sensor that draws 0.7mA for 0.1 seconds every 5 seconds
                         </div>
                         <div id="pulseWarning" class="warning" style="display: none;">
                             ⚠️ Pulse duration cannot be longer than the interval
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operation Mode -->
+                <div class="input-section">
+                    <h3 class="section-title">Operation Mode</h3>
+                    <div class="input-group">
+                        <div class="input-row single">
+                            <div class="input-field">
+                                <label>
+                                    <input type="checkbox" id="dayModeToggle" style="margin-right: 0.5rem;">
+                                    12-hour operation (day only)
+                                </label>
+                                <div class="help-text">Enable for circuits that only operate during daylight hours</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -506,20 +522,24 @@
                             <div class="calc-value" id="dutyCycle">2.0%</div>
                         </div>
                         <div class="calc-item">
-                            <div class="calc-label">Average Current</div>
-                            <div class="calc-value" id="avgCurrent">0.04 mA</div>
+                            <div class="calc-label">LED Current</div>
+                            <div class="calc-value" id="avgLedCurrent">0.014 mA</div>
                         </div>
                         <div class="calc-item">
-                            <div class="calc-label">Battery Voltage</div>
-                            <div class="calc-value" id="displayVoltage">1.5 V</div>
+                            <div class="calc-label">Quiescent Current</div>
+                            <div class="calc-value" id="quiescentCurrent">0.5 mA</div>
                         </div>
                         <div class="calc-item">
-                            <div class="calc-label">Battery Capacity</div>
-                            <div class="calc-value" id="displayCapacity">2,800 mAh</div>
+                            <div class="calc-label">Total Current</div>
+                            <div class="calc-value" id="totalCurrent">0.514 mA</div>
+                        </div>
+                        <div class="calc-item">
+                            <div class="calc-label">Effective Average</div>
+                            <div class="calc-value" id="effectiveCurrent">0.257 mA</div>
                         </div>
                         <div class="calc-item">
                             <div class="calc-label">Battery Life</div>
-                            <div class="calc-value" id="batteryLifeHours">70,000 hours</div>
+                            <div class="calc-value" id="batteryLifeHours">10,894 hours</div>
                         </div>
                     </div>
                 </div>
@@ -556,21 +576,9 @@
     <script>
         // Battery configurations
         const batteryConfigs = {
-            'duracell-ultra-aa': { name: 'Duracell Ultra AA', capacity: 2800, voltage: 1.5 },
-            'duracell-coppertop-aa': { name: 'Duracell CopperTop AA', capacity: 2500, voltage: 1.5 },
-            'energizer-max-aa': { name: 'Energizer Max AA', capacity: 2850, voltage: 1.5 },
-            'energizer-ultimate-aa': { name: 'Energizer Ultimate Lithium AA', capacity: 3500, voltage: 1.5 },
-            'eveready-aa': { name: 'Eveready AA', capacity: 2100, voltage: 1.5 },
-            'kirkland-aa': { name: 'Kirkland Signature AA', capacity: 2400, voltage: 1.5 },
-            'rayovac-aa': { name: 'Rayovac AA', capacity: 2200, voltage: 1.5 },
-            'duracell-9v': { name: 'Duracell 9V', capacity: 550, voltage: 9.0 },
-            'energizer-9v': { name: 'Energizer 9V', capacity: 625, voltage: 9.0 },
-            'eveready-9v': { name: 'Eveready 9V', capacity: 500, voltage: 9.0 },
-            'duracell-aaa': { name: 'Duracell AAA', capacity: 1000, voltage: 1.5 },
-            'energizer-aaa': { name: 'Energizer AAA', capacity: 1200, voltage: 1.5 },
-            'cr2032': { name: 'CR2032 Coin Cell', capacity: 240, voltage: 3.0 },
-            'cr123a': { name: 'CR123A Lithium', capacity: 1500, voltage: 3.0 },
-            'custom': { name: 'Custom', capacity: 2800, voltage: 1.5 }
+            'duracell-ultra-aa': { name: 'Duracell Ultra AA', capacity: 1500, voltage: 1.5 },
+            'eveready-aa': { name: 'Eveready AA', capacity: 540, voltage: 1.5 },
+            'custom': { name: 'Custom', capacity: 1500, voltage: 1.5 }
         };
 
         // Get DOM elements
@@ -581,12 +589,14 @@
         const pulseInterval = document.getElementById('pulseInterval');
         const pulseDuration = document.getElementById('pulseDuration');
         const pulseWarning = document.getElementById('pulseWarning');
+        const dayModeToggle = document.getElementById('dayModeToggle');
 
         // Result elements
         const dutyCycle = document.getElementById('dutyCycle');
-        const avgCurrent = document.getElementById('avgCurrent');
-        const displayVoltage = document.getElementById('displayVoltage');
-        const displayCapacity = document.getElementById('displayCapacity');
+        const avgLedCurrent = document.getElementById('avgLedCurrent');
+        const quiescentCurrent = document.getElementById('quiescentCurrent');
+        const totalCurrent = document.getElementById('totalCurrent');
+        const effectiveCurrent = document.getElementById('effectiveCurrent');
         const batteryLifeHours = document.getElementById('batteryLifeHours');
         const resultMain = document.getElementById('resultMain');
         const resultYears = document.getElementById('resultYears');
@@ -601,6 +611,7 @@
         currentDraw.addEventListener('input', validateAndCalculate);
         pulseInterval.addEventListener('input', validateAndCalculate);
         pulseDuration.addEventListener('input', validateAndCalculate);
+        dayModeToggle.addEventListener('change', calculateBatteryLife);
 
         function onBatteryBrandChange() {
             const selectedBrand = batteryBrand.value;
@@ -652,13 +663,14 @@
                 // Get input values
                 const capacity = parseFloat(batteryCapacity.value);
                 const voltage = parseFloat(batteryVoltage.value);
-                const current = parseFloat(currentDraw.value);
+                const ledCurrentMa = parseFloat(currentDraw.value);
                 const interval = parseFloat(pulseInterval.value);
                 const duration = parseFloat(pulseDuration.value);
+                const isDayMode = dayModeToggle.checked;
 
                 // Validate inputs
-                if (isNaN(capacity) || isNaN(voltage) || isNaN(current) || isNaN(interval) || isNaN(duration) ||
-                    capacity <= 0 || voltage <= 0 || current <= 0 || interval <= 0 || duration <= 0) {
+                if (isNaN(capacity) || isNaN(voltage) || isNaN(ledCurrentMa) || isNaN(interval) || isNaN(duration) ||
+                    capacity <= 0 || voltage <= 0 || ledCurrentMa <= 0 || interval <= 0 || duration <= 0) {
                     return;
                 }
 
@@ -666,26 +678,38 @@
                     return;
                 }
 
-                // Calculate duty cycle
+                // Circuit specifications (matching astable delay simulator)
+                const quiescentCurrentMa = 0.5; // Circuit's quiescent current
+                
+                // Calculate duty cycle correctly: LED on time / total cycle time
                 const dutyCycleValue = duration / interval;
                 const dutyCyclePercent = dutyCycleValue * 100;
+                
+                // Calculate average LED current using proper duty cycle formula
+                const avgLedCurrentMa = ledCurrentMa * dutyCycleValue;
+                const totalCurrentMa = quiescentCurrentMa + avgLedCurrentMa;
+                
+                // Apply day mode factor to operating hours (not to current)
+                const operatingHoursPerDay = isDayMode ? 12 : 24;
+                const operatingDutyCycle = operatingHoursPerDay / 24;
+                
+                // Calculate effective average current over 24 hours
+                const effectiveAvgCurrentMa = totalCurrentMa * operatingDutyCycle;
+                
+                // Calculate battery life using correct formula: capacity / average_current
+                const batteryLifeHoursValue = capacity / effectiveAvgCurrentMa;
 
-                // Calculate average current
-                const avgCurrentValue = current * dutyCycleValue;
-
-                // Calculate battery life in hours
-                const batteryLifeHoursValue = capacity / avgCurrentValue;
-
-                // Convert to other time units
+                // Convert to other time units with proper decimals
                 const days = batteryLifeHoursValue / 24;
                 const months = days / 30;
                 const years = days / 365;
 
                 // Update display elements
                 dutyCycle.textContent = `${dutyCyclePercent.toFixed(2)}%`;
-                avgCurrent.textContent = `${avgCurrentValue.toFixed(3)} mA`;
-                displayVoltage.textContent = `${voltage.toFixed(1)} V`;
-                displayCapacity.textContent = `${capacity.toLocaleString()} mAh`;
+                avgLedCurrent.textContent = `${avgLedCurrentMa.toFixed(3)} mA`;
+                quiescentCurrent.textContent = `${quiescentCurrentMa.toFixed(1)} mA`;
+                totalCurrent.textContent = `${totalCurrentMa.toFixed(3)} mA`;
+                effectiveCurrent.textContent = `${effectiveAvgCurrentMa.toFixed(3)} mA`;
                 batteryLifeHours.textContent = `${Math.round(batteryLifeHoursValue).toLocaleString()} hours`;
 
                 // Update result breakdown
@@ -709,7 +733,8 @@
                     timeDisplay = `${Math.round(batteryLifeHoursValue)} hours`;
                 }
 
-                resultMain.innerHTML = `Your circuit will run for <strong>${timeDisplay}</strong> on a single ${brandName} battery.`;
+                const operationMode = isDayMode ? " (12-hour operation)" : " (24-hour operation)";
+                resultMain.innerHTML = `Your circuit will run for <strong>${timeDisplay}</strong> on a single ${brandName} battery${operationMode}.`;
 
             } catch (error) {
                 console.error('Calculation error:', error);
@@ -718,22 +743,43 @@
 
         function resetToDefaults() {
             batteryBrand.value = 'duracell-ultra-aa';
-            batteryCapacity.value = 2800;
-            batteryVoltage.value = 1.5;
-            batteryCapacity.readOnly = true;
-            batteryVoltage.readOnly = true;
-            currentDraw.value = 2;
-            pulseInterval.value = 5;
-            pulseDuration.value = 0.1;
-            pulseWarning.style.display = 'none';
-            pulseDuration.style.borderColor = 'var(--foreground)';
-            pulseDuration.style.borderWidth = 'var(--border-width)';
-            currentDraw.setCustomValidity('');
+            currentDraw.value = '0.7';
+            pulseInterval.value = '5';
+            pulseDuration.value = '0.1';
+            dayModeToggle.checked = false;
+            onBatteryBrandChange();
+        }
+
+        // Populate battery dropdown and initialize
+        function initializePage() {
+            // Populate battery dropdown
+            batteryBrand.innerHTML = '';
+            
+            // Add optgroups
+            const aaGroup = document.createElement('optgroup');
+            aaGroup.label = 'AA Batteries';
+            aaGroup.innerHTML = `
+                <option value="duracell-ultra-aa">Duracell Ultra AA (1,500mAh, 1.5V)</option>
+                <option value="eveready-aa">Eveready AA (540mAh, 1.5V)</option>
+            `;
+            
+            const customGroup = document.createElement('optgroup');
+            customGroup.label = 'Custom';
+            customGroup.innerHTML = `
+                <option value="custom">Custom (Enter manually)</option>
+            `;
+            
+            batteryBrand.appendChild(aaGroup);
+            batteryBrand.appendChild(customGroup);
+            
+            // Set default selection
+            batteryBrand.value = 'duracell-ultra-aa';
+            onBatteryBrandChange();
             calculateBatteryLife();
         }
 
         // Initial calculation
-        calculateBatteryLife();
+        initializePage();
     </script>
 </body>
 </html>
