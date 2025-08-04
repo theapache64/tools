@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Names to Folder Structure</title>
+    <style>
+        /* Neo Brutalist Design System */
+        :root {
+            --background: #ffffff;
+            --foreground: #000000;
+            --primary: #ff3e41;
+            --secondary: #3633ff;
+            --accent: #ffde59;
+            --neutral: #e0e0e0;
+            --border-width: 3px;
+            --shadow-offset: 6px;
+            --box-shadow: 6px 6px 0 0 #000000;
+            --border-radius: 2px;
+            --font-family: 'Courier New', monospace;
+        }
+
+        .dark {
+            --background: #0f0f0f;
+            --foreground: #ffffff;
+            --primary: #ff5e54;
+            --secondary: #4d4aff;
+            --accent: #ffe066;
+            --neutral: #333333;
+            --box-shadow: 6px 6px 0 0 #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transform: translateZ(0);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .container:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: var(--border-width) solid var(--foreground);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .main-content {
+            display: flex;
+            height: calc(100vh - 200px);
+            min-height: 600px;
+        }
+
+        .left-pane, .right-pane {
+            flex: 1;
+            padding: 30px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .left-pane {
+            border-right: var(--border-width) solid var(--foreground);
+            background-color: var(--background);
+        }
+
+        .right-pane {
+            background-color: var(--background);
+        }
+
+        .pane-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--foreground);
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: var(--border-width) solid var(--foreground);
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        .input-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #packageInput {
+            flex: 1;
+            width: 100%;
+            padding: 20px;
+            border: var(--border-width) solid var(--foreground);
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            box-shadow: var(--box-shadow);
+            transition: all 0.2s ease;
+            font-weight: bold;
+        }
+
+        #packageInput:focus {
+            outline: none;
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: var(--border-width) solid var(--foreground);
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--box-shadow);
+            font-family: var(--font-family);
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            background-color: var(--background);
+            color: var(--foreground);
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .btn:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 0 var(--foreground);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .sample-btn {
+            background-color: var(--accent);
+            color: var(--foreground);
+        }
+
+        .output-area {
+            flex: 1;
+            overflow: auto;
+            background-color: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            padding: 20px;
+            font-family: var(--font-family);
+            font-size: 14px;
+            line-height: 1.8;
+            box-shadow: var(--box-shadow);
+            color: var(--foreground);
+            font-weight: bold;
+        }
+
+        .folder {
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .file {
+            color: var(--secondary);
+            font-weight: 800;
+        }
+
+        .tree-line {
+            color: var(--foreground);
+            font-weight: bold;
+        }
+
+        .stats {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: var(--accent);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            font-size: 0.9rem;
+            color: var(--foreground);
+            text-align: center;
+            font-weight: 800;
+            text-transform: uppercase;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stats:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--foreground);
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .empty-state h3 {
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .empty-state p {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            color: var(--foreground);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .left-pane {
+                border-right: none;
+                border-bottom: var(--border-width) solid var(--foreground);
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                margin: 10px;
+            }
+
+            body {
+                padding: 10px;
+            }
+        }
+
+        .neo-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .neo-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .neo-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--neutral);
+            border: var(--border-width) solid var(--foreground);
+            transition: .4s;
+        }
+
+        .neo-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--foreground);
+            transition: .4s;
+        }
+
+        input:checked + .neo-slider {
+            background-color: var(--secondary);
+        }
+
+        input:checked + .neo-slider:before {
+            transform: translateX(30px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        s
+        
+        <div class="header">
+            <h1>📁 Package to Folder Structure</h1>
+            <p>Convert Java package names into a visual folder tree structure</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="left-pane">
+                <h2 class="pane-title">📋 Package Names Input</h2>
+                <div class="input-area">
+                    <textarea 
+                        id="packageInput" 
+                        placeholder="Paste your package names here, separated by commas or line breaks...
+
+Example:
+com.example.app.ui
+com.example.app.data.model
+com.example.app.data.network
+org.apache.commons.lang"
+                    ></textarea>
+                    <div class="controls">
+                        <button class="btn btn-primary" onclick="generateStructure()">
+                            🔄 Generate Structure
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearAll()">
+                            🗑️ Clear All
+                        </button>
+                        <button class="btn btn-secondary sample-btn" onclick="loadSample()">
+                            📄 Load Sample
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-pane">
+                <h2 class="pane-title">🌳 Folder Structure</h2>
+                <div class="output-area" id="output">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
+                        </svg>
+                        <h3>No structure generated yet</h3>
+                        <p>Enter package names in the left pane and click "Generate Structure" to see the folder tree here.</p>
+                    </div>
+                </div>
+                <div id="stats" class="stats" style="display: none;">
+                    <span id="statsText"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            body.classList.add('dark');
+            themeToggle.checked = true;
+        }
+
+        themeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                body.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // Tree structure to hold the folder hierarchy
+        class TreeNode {
+            constructor(name) {
+                this.name = name;
+                this.children = new Map();
+                this.isPackage = false;
+            }
+        }
+
+        function parsePackages(input) {
+            // Split by commas, newlines, or spaces and filter empty strings
+            const packages = input
+                .split(/[,\n\s]+/)
+                .map(pkg => pkg.trim())
+                .filter(pkg => pkg.length > 0);
+            
+            return packages;
+        }
+
+        function buildTree(packages) {
+            const root = new TreeNode('root');
+            
+            packages.forEach(pkg => {
+                const parts = pkg.split('.');
+                let current = root;
+                
+                parts.forEach((part, index) => {
+                    if (!current.children.has(part)) {
+                        current.children.set(part, new TreeNode(part));
+                    }
+                    current = current.children.get(part);
+                    
+                    // Mark as package if it's the last part
+                    if (index === parts.length - 1) {
+                        current.isPackage = true;
+                    }
+                });
+            });
+            
+            return root;
+        }
+
+        function renderTree(node, prefix = '', isLast = true, depth = 0) {
+            let result = '';
+            
+            if (depth > 0) {
+                const connector = isLast ? '└── ' : '├── ';
+                const nodeClass = node.isPackage ? 'file' : 'folder';
+                const icon = node.isPackage ? '📄' : '📁';
+                
+                result += `<span class="tree-line">${prefix}${connector}</span><span class="${nodeClass}">${icon} ${node.name}</span>\n`;
+            }
+            
+            const children = Array.from(node.children.values());
+            const sortedChildren = children.sort((a, b) => {
+                // Folders first, then files
+                if (a.isPackage !== b.isPackage) {
+                    return a.isPackage ? 1 : -1;
+                }
+                return a.name.localeCompare(b.name);
+            });
+            
+            sortedChildren.forEach((child, index) => {
+                const isLastChild = index === sortedChildren.length - 1;
+                const newPrefix = depth > 0 ? prefix + (isLast ? '    ' : '│   ') : '';
+                result += renderTree(child, newPrefix, isLastChild, depth + 1);
+            });
+            
+            return result;
+        }
+
+        function generateStructure() {
+            const input = document.getElementById('packageInput').value.trim();
+            const output = document.getElementById('output');
+            const stats = document.getElementById('stats');
+            const statsText = document.getElementById('statsText');
+            
+            if (!input) {
+                output.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <h3>Please enter some package names</h3>
+                        <p>Add package names in the left pane to generate the folder structure.</p>
+                    </div>
+                `;
+                stats.style.display = 'none';
+                return;
+            }
+            
+            try {
+                const packages = parsePackages(input);
+                const tree = buildTree(packages);
+                const treeHtml = renderTree(tree);
+                
+                if (treeHtml.trim()) {
+                    output.innerHTML = `<pre>${treeHtml}</pre>`;
+                    
+                    // Calculate stats
+                    const uniquePackages = new Set(packages).size;
+                    const totalFolders = (treeHtml.match(/📁/g) || []).length;
+                    const totalFiles = (treeHtml.match(/📄/g) || []).length;
+                    
+                    statsText.textContent = `📊 Generated: ${totalFolders} folders, ${totalFiles} packages from ${uniquePackages} unique entries`;
+                    stats.style.display = 'block';
+                } else {
+                    throw new Error('No valid packages found');
+                }
+            } catch (error) {
+                output.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                        </svg>
+                        <h3>Error parsing packages</h3>
+                        <p>Please check your input format. Make sure packages are separated by commas, spaces, or line breaks.</p>
+                    </div>
+                `;
+                stats.style.display = 'none';
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('packageInput').value = '';
+            document.getElementById('output').innerHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
+                    </svg>
+                    <h3>Cleared!</h3>
+                    <p>Ready for new package names.</p>
+                </div>
+            `;
+            document.getElementById('stats').style.display = 'none';
+        }
+
+        function loadSample() {
+            const sampleData = `com.hotstar.ui.model.widget, net.one97.paytm.webRedirection, net.one97.paytm.nativesdk.dataSource.utils, net.one97.paytm.nativesdk.dataSource.models, net.one97.paytm.nativesdk.app, net.one97.paytm.nativesdk.directpages.viewmodel, net.one97.paytm.nativesdk.directpages.widget, net.one97.paytm.nativesdk.directpages.listners, net.one97.paytm.nativesdk.Utils, net.one97.paytm.nativesdk.paymethods.datasource, org.junit.experimental.theories, org.junit.experimental.max, org.junit.runner.manipulation, org.chromium.net, kotlinx.coroutines.test.internal, kotlin.ranges, kotlin.reflect.full, com.google.crypto.tink.shaded.protobuf, com.google.cardboard.proto, androidx.mediarouter.app, androidx.webkit, androidx.core.net`;
+            
+            document.getElementById('packageInput').value = sampleData;
+            generateStructure();
+        }
+
+        // Auto-generate on input change with debounce
+        let debounceTimer;
+        document.getElementById('packageInput').addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(generateStructure, 500);
+        });
+
+        // Generate structure on Enter key
+        document.getElementById('packageInput').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                generateStructure();
+            }
+        });
+    </script>
+</body>
+</html>
