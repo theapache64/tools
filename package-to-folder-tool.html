@@ -200,7 +200,7 @@
             padding: 20px;
             font-family: var(--font-family);
             font-size: 14px;
-            line-height: 1.8;
+            line-height: 1.1;
             box-shadow: var(--box-shadow);
             color: var(--foreground);
             font-weight: bold;
@@ -219,6 +219,12 @@
         .tree-line {
             color: var(--foreground);
             font-weight: bold;
+            white-space: pre;
+        }
+
+        .expand-spacer {
+            display: inline-block;
+            width: 2rem;
         }
 
         .tree-node {
@@ -262,13 +268,24 @@
 
         .tree-container {
             font-family: var(--font-family);
-            line-height: 1.8;
+            line-height: 1.0;
+            white-space: pre-wrap;
         }
 
         .tree-container .tree-node {
-            margin: 2px 0;
-            padding: 2px 4px;
+            margin: 0;
+            padding: 0px 1px;
             border-radius: 2px;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .frequency-badge {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            font-weight: bold;
+            margin-left: 0.5rem;
+            opacity: 0.8;
         }
 
         .stats {
@@ -573,6 +590,8 @@ org.apache.commons.lang"
                 this.name = name;
                 this.children = new Map();
                 this.isPackage = false;
+                this.frequency = 0; // How many times this exact path appears
+                this.totalDescendants = 0; // Total count of all descendants
             }
         }
 
@@ -589,6 +608,7 @@ org.apache.commons.lang"
         function buildTree(packages) {
             const root = new TreeNode('root');
             
+            // First pass: build tree structure and count direct frequencies
             packages.forEach(pkg => {
                 const parts = pkg.split('.');
                 let current = root;
@@ -599,6 +619,9 @@ org.apache.commons.lang"
                     }
                     current = current.children.get(part);
                     
+                    // Increment frequency for this node
+                    current.frequency++;
+                    
                     // Mark as package if it's the last part
                     if (index === parts.length - 1) {
                         current.isPackage = true;
@@ -606,6 +629,19 @@ org.apache.commons.lang"
                 });
             });
             
+            // Second pass: calculate total descendant counts
+            function calculateDescendants(node) {
+                let total = node.frequency;
+                
+                for (let child of node.children.values()) {
+                    total += calculateDescendants(child);
+                }
+                
+                node.totalDescendants = total;
+                return total;
+            }
+            
+            calculateDescendants(root);
             return root;
         }
 
@@ -618,6 +654,7 @@ org.apache.commons.lang"
                 const icon = node.isPackage ? '📄' : '📁';
                 const hasChildren = node.children.size > 0;
                 const nodeId = `node-${Math.random().toString(36).substr(2, 9)}`;
+                const frequencyText = node.isPackage ? `(${node.frequency})` : `(${node.totalDescendants})`;
                 
                 if (hasChildren && !node.isPackage) {
                     // Folder with children - expandable
@@ -625,9 +662,10 @@ org.apache.commons.lang"
                     result += `<span class="tree-line">${prefix}${connector}</span>`;
                     result += `<span class="expand-icon" id="icon-${nodeId}">▶</span>`;
                     result += `<span class="${nodeClass}">${icon} ${node.name}</span>`;
+                    result += ` <span class="frequency-badge">${frequencyText}</span>`;
                     result += `</div>\n`;
                     
-                    // Children container
+                    // Children container with proper indentation
                     result += `<div class="tree-children collapsed" id="${nodeId}">\n`;
                 } else {
                     // File or empty folder - not expandable
@@ -636,19 +674,34 @@ org.apache.commons.lang"
                     if (!node.isPackage && hasChildren) {
                         result += `<span class="expand-icon" style="opacity: 0.3;">▶</span>`;
                     } else {
-                        result += `<span style="margin-right: 1.5rem;"></span>`;
+                        result += `<span class="expand-spacer"></span>`;
                     }
                     result += `<span class="${nodeClass}">${icon} ${node.name}</span>`;
+                    if (node.frequency > 0 || node.totalDescendants > 0) {
+                        result += ` <span class="frequency-badge">${frequencyText}</span>`;
+                    }
                     result += `</div>\n`;
                 }
             }
             
             const children = Array.from(node.children.values());
             const sortedChildren = children.sort((a, b) => {
-                // Folders first, then files
+                // Primary sort: by total descendants (higher first)
+                if (a.totalDescendants !== b.totalDescendants) {
+                    return b.totalDescendants - a.totalDescendants;
+                }
+                
+                // Secondary sort: by direct frequency (higher first)
+                if (a.frequency !== b.frequency) {
+                    return b.frequency - a.frequency;
+                }
+                
+                // Tertiary sort: folders before files
                 if (a.isPackage !== b.isPackage) {
                     return a.isPackage ? 1 : -1;
                 }
+                
+                // Final sort: alphabetical
                 return a.name.localeCompare(b.name);
             });
             
