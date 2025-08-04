@@ -221,6 +221,56 @@
             font-weight: bold;
         }
 
+        .tree-node {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .tree-node:hover {
+            background-color: var(--neutral);
+            transform: translate(-1px, -1px);
+        }
+
+        .tree-node.folder {
+            position: relative;
+        }
+
+        .tree-children {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .tree-children.collapsed {
+            max-height: 0;
+        }
+
+        .tree-children.expanded {
+            max-height: 1000px;
+        }
+
+        .expand-icon {
+            display: inline-block;
+            margin-right: 0.5rem;
+            transition: transform 0.2s ease;
+            font-weight: bold;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .tree-container {
+            font-family: var(--font-family);
+            line-height: 1.8;
+        }
+
+        .tree-container .tree-node {
+            margin: 2px 0;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
         .stats {
             margin-top: 15px;
             padding: 15px;
@@ -342,7 +392,12 @@
 </head>
 <body>
     <div class="container">
-        s
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1rem; padding: 20px; border-bottom: var(--border-width) solid var(--foreground);">
+            <label class="neo-toggle">
+                <input type="checkbox" id="theme-toggle">
+                <span class="neo-slider"></span>
+            </label>
+        </div>
         
         <div class="header">
             <h1>📁 Package to Folder Structure</h1>
@@ -404,18 +459,113 @@ org.apache.commons.lang"
         const currentTheme = localStorage.getItem('theme') || 'light';
         if (currentTheme === 'dark') {
             body.classList.add('dark');
-            themeToggle.checked = true;
+            if (themeToggle) themeToggle.checked = true;
         }
 
-        themeToggle.addEventListener('change', function() {
-            if (this.checked) {
-                body.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                body.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
+        if (themeToggle) {
+            themeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    body.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    body.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        }
+
+        // Toggle node expand/collapse functionality
+        function toggleNode(nodeId) {
+            const node = document.getElementById(nodeId);
+            const icon = document.getElementById(`icon-${nodeId}`);
+            
+            if (node && icon) {
+                if (node.classList.contains('collapsed')) {
+                    node.classList.remove('collapsed');
+                    node.classList.add('expanded');
+                    icon.classList.add('expanded');
+                } else {
+                    node.classList.remove('expanded');
+                    node.classList.add('collapsed');
+                    icon.classList.remove('expanded');
+                }
+                
+                // Save tree state
+                saveTreeState();
             }
-        });
+        }
+
+        // Save tree state to localStorage
+        function saveTreeState() {
+            const treeState = {};
+            const expandedNodes = document.querySelectorAll('.tree-children.expanded');
+            expandedNodes.forEach(node => {
+                treeState[node.id] = true;
+            });
+            localStorage.setItem('packageToolTreeState', JSON.stringify(treeState));
+        }
+
+        // Restore tree state from localStorage
+        function restoreTreeState() {
+            const savedState = localStorage.getItem('packageToolTreeState');
+            if (savedState) {
+                try {
+                    const treeState = JSON.parse(savedState);
+                    Object.keys(treeState).forEach(nodeId => {
+                        const node = document.getElementById(nodeId);
+                        const icon = document.getElementById(`icon-${nodeId}`);
+                        if (node && icon && treeState[nodeId]) {
+                            node.classList.remove('collapsed');
+                            node.classList.add('expanded');
+                            icon.classList.add('expanded');
+                        }
+                    });
+                } catch (error) {
+                    console.log('Error restoring tree state:', error);
+                }
+            }
+        }
+
+        // Save input and output to localStorage
+        function saveAppState() {
+            const input = document.getElementById('packageInput').value;
+            const output = document.getElementById('output').innerHTML;
+            const statsDisplay = document.getElementById('stats').style.display;
+            const statsText = document.getElementById('statsText').textContent;
+            
+            localStorage.setItem('packageToolInput', input);
+            localStorage.setItem('packageToolOutput', output);
+            localStorage.setItem('packageToolStatsDisplay', statsDisplay);
+            localStorage.setItem('packageToolStatsText', statsText);
+        }
+
+        // Restore input and output from localStorage
+        function restoreAppState() {
+            const savedInput = localStorage.getItem('packageToolInput');
+            const savedOutput = localStorage.getItem('packageToolOutput');
+            const savedStatsDisplay = localStorage.getItem('packageToolStatsDisplay');
+            const savedStatsText = localStorage.getItem('packageToolStatsText');
+            
+            if (savedInput) {
+                document.getElementById('packageInput').value = savedInput;
+            }
+            
+            if (savedOutput) {
+                document.getElementById('output').innerHTML = savedOutput;
+                // Restore tree state after a short delay to ensure DOM is ready
+                setTimeout(() => {
+                    restoreTreeState();
+                }, 100);
+            }
+            
+            if (savedStatsDisplay && savedStatsText) {
+                document.getElementById('stats').style.display = savedStatsDisplay;
+                document.getElementById('statsText').textContent = savedStatsText;
+            }
+        }
+
+        // Make toggleNode globally available
+        window.toggleNode = toggleNode;
 
         // Tree structure to hold the folder hierarchy
         class TreeNode {
@@ -466,8 +616,31 @@ org.apache.commons.lang"
                 const connector = isLast ? '└── ' : '├── ';
                 const nodeClass = node.isPackage ? 'file' : 'folder';
                 const icon = node.isPackage ? '📄' : '📁';
+                const hasChildren = node.children.size > 0;
+                const nodeId = `node-${Math.random().toString(36).substr(2, 9)}`;
                 
-                result += `<span class="tree-line">${prefix}${connector}</span><span class="${nodeClass}">${icon} ${node.name}</span>\n`;
+                if (hasChildren && !node.isPackage) {
+                    // Folder with children - expandable
+                    result += `<div class="tree-node folder" onclick="toggleNode('${nodeId}')">`;
+                    result += `<span class="tree-line">${prefix}${connector}</span>`;
+                    result += `<span class="expand-icon" id="icon-${nodeId}">▶</span>`;
+                    result += `<span class="${nodeClass}">${icon} ${node.name}</span>`;
+                    result += `</div>\n`;
+                    
+                    // Children container
+                    result += `<div class="tree-children collapsed" id="${nodeId}">\n`;
+                } else {
+                    // File or empty folder - not expandable
+                    result += `<div class="tree-node">`;
+                    result += `<span class="tree-line">${prefix}${connector}</span>`;
+                    if (!node.isPackage && hasChildren) {
+                        result += `<span class="expand-icon" style="opacity: 0.3;">▶</span>`;
+                    } else {
+                        result += `<span style="margin-right: 1.5rem;"></span>`;
+                    }
+                    result += `<span class="${nodeClass}">${icon} ${node.name}</span>`;
+                    result += `</div>\n`;
+                }
             }
             
             const children = Array.from(node.children.values());
@@ -484,6 +657,11 @@ org.apache.commons.lang"
                 const newPrefix = depth > 0 ? prefix + (isLast ? '    ' : '│   ') : '';
                 result += renderTree(child, newPrefix, isLastChild, depth + 1);
             });
+            
+            // Close children container if it was opened
+            if (depth > 0 && node.children.size > 0 && !node.isPackage) {
+                result += `</div>\n`;
+            }
             
             return result;
         }
@@ -514,7 +692,7 @@ org.apache.commons.lang"
                 const treeHtml = renderTree(tree);
                 
                 if (treeHtml.trim()) {
-                    output.innerHTML = `<pre>${treeHtml}</pre>`;
+                    output.innerHTML = `<div class="tree-container">${treeHtml}</div>`;
                     
                     // Calculate stats
                     const uniquePackages = new Set(packages).size;
@@ -523,6 +701,9 @@ org.apache.commons.lang"
                     
                     statsText.textContent = `📊 Generated: ${totalFolders} folders, ${totalFiles} packages from ${uniquePackages} unique entries`;
                     stats.style.display = 'block';
+                    
+                    // Save app state
+                    saveAppState();
                 } else {
                     throw new Error('No valid packages found');
                 }
@@ -552,6 +733,13 @@ org.apache.commons.lang"
                 </div>
             `;
             document.getElementById('stats').style.display = 'none';
+            
+            // Clear localStorage
+            localStorage.removeItem('packageToolInput');
+            localStorage.removeItem('packageToolOutput');
+            localStorage.removeItem('packageToolStatsDisplay');
+            localStorage.removeItem('packageToolStatsText');
+            localStorage.removeItem('packageToolTreeState');
         }
 
         function loadSample() {
@@ -565,7 +753,12 @@ org.apache.commons.lang"
         let debounceTimer;
         document.getElementById('packageInput').addEventListener('input', function() {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(generateStructure, 500);
+            debounceTimer = setTimeout(() => {
+                generateStructure();
+            }, 500);
+            
+            // Save input immediately
+            localStorage.setItem('packageToolInput', this.value);
         });
 
         // Generate structure on Enter key
@@ -574,6 +767,18 @@ org.apache.commons.lang"
                 generateStructure();
             }
         });
+
+        // Initialize app on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            restoreAppState();
+        });
+
+        // Also restore state when the script runs (in case DOMContentLoaded already fired)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', restoreAppState);
+        } else {
+            restoreAppState();
+        }
     </script>
 </body>
 </html>
