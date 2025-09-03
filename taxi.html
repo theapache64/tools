@@ -516,10 +516,12 @@
             const formattedTime = formatTime(time);
             const formattedFare = formatFareForDisplay(fare);
             
-            const output = `📅 Date: ${formattedDate}
+            const output = `Hi! � Here are your ride details:
+
+�📅 Date: ${formattedDate}
 🕐 Time: ${formattedTime}
-📌 Pickup : ${pickup}
-📌 Drop-off : ${dropoff}
+📌 Pickup: ${pickup}
+📌 Drop-off: ${dropoff}
 💵 Fare: ${formattedFare}`;
             
             const outputElement = document.getElementById('output');
