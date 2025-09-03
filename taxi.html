@@ -316,6 +316,7 @@
 
         <div id="output" class="output"></div>
         
+        <button id="shareBtn" class="btn" style="display: none;">Share to WhatsApp</button>
         <button id="copyBtn" class="btn secondary" style="display: none;">Copy to Clipboard</button>
     </div>
 
@@ -525,7 +526,16 @@ Fare: ${formattedFare}`;
             outputElement.textContent = output;
             outputElement.classList.add('show');
             
+            document.getElementById('shareBtn').style.display = 'block';
             document.getElementById('copyBtn').style.display = 'block';
+        });
+
+        // Handle share to WhatsApp
+        document.getElementById('shareBtn').addEventListener('click', function() {
+            const output = document.getElementById('output').textContent;
+            const encodedText = encodeURIComponent(output);
+            const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+            window.open(whatsappUrl, '_blank');
         });
 
         // Theme toggle
