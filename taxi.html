@@ -9,6 +9,36 @@
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiVGF4aSBCb29raW5nIiwic2hvcnRfbmFtZSI6IlRheGkiLCJzdGFydF91cmwiOiIuL3RheGkuaHRtbCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiMwMDAwMDAiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhkcFpIUm9QU0kwT0NJZ2FHVnBaMmgwUFNJME9DSWdkbWxsZDBKdmVEMGlNQ0F3SURRNElEUTRJajQ4Y21WamRDQjNhV1IwYUQwaU5EZ2lJR2hsYVdkb2REMGlORGdpSUdacGJHdzlJaU13TURBaUx6NDhjR0YwYUNCa1BTSmJNaklzTlMxYU1qSTNJRFl1TlMxWU1qRXpJRFl1TlMxWU1qRXpJRE14TGpVZ1REQXpOUzF6TmpVdVJYazJOVEEyTkRGYUlWb3lNams2SUVFMU5EUWdOVFEwSURBZ01EQWJNU0EzTURGYU5EZzJJREEyTUZveU1UZ2dOREUySURJeE9DQTBNVFlnTWpFNElEUXhOaUJhVEdnd1dUazJXalptTVRFM0xWZ3hPVFJhUVhreU56TmFTeTFrTVRKWUlYcGVOaTViTlNBNE5TWTJJREl6Tmw0MkxqVWdORFEyU0c1VE5EQTNJRFkzT1YwNklqNDhMM0JoZEdnK1BDOXpkbWMrIiwic2l6ZXMiOiI0OHg0OCIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
     <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDQ4IDQ4Ij48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJbMjIsNS1aMjI3IDYuNS1YMjEzIDYuNS1YMjEzIDMxLjUgTDAzNS1zNjUuRXk2NTA2NDFaIVoyMjk6IEE1NDQgNTQ0IDAgMDAaMSA3MDFaNDg2IDA2MFoyMTggNDE2IDIxOCA0MTYgMjE4IDQxNiBaIExoMFk5NlpmMTE3LVgxOTRaQXkyNzNaUy1kMTJYIXpeNi5bNSA4NTY2IDIzNl42LjUgNDQ2U241NDA3IDY3OV02Il0+PC9wYXRoPjwvc3ZnPg==">
     <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --border-color: #e0e0e0;
+            --input-bg: #ffffff;
+            --secondary-text: #666;
+            --button-bg: #000000;
+            --button-text: #ffffff;
+            --button-hover: #333333;
+            --secondary-bg: #f5f5f5;
+            --output-bg: #f9f9f9;
+            --suggestion-bg: #ffffff;
+            --suggestion-hover: #f5f5f5;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0a0a0a;
+            --text-color: #ffffff;
+            --border-color: #333333;
+            --input-bg: #1a1a1a;
+            --secondary-text: #999;
+            --button-bg: #ffffff;
+            --button-text: #000000;
+            --button-hover: #e0e0e0;
+            --secondary-bg: #1a1a1a;
+            --output-bg: #1a1a1a;
+            --suggestion-bg: #1a1a1a;
+            --suggestion-hover: #333333;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -17,11 +47,12 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: #ffffff;
-            color: #000000;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             line-height: 1.6;
             min-height: 100vh;
             padding: 1rem;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -33,6 +64,7 @@
         .header {
             text-align: center;
             margin-bottom: 2rem;
+            position: relative;
         }
 
         .header h1 {
@@ -42,12 +74,31 @@
         }
 
         .header p {
-            color: #666;
+            color: var(--secondary-text);
             font-size: 0.9rem;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--secondary-bg);
         }
 
         .form-group {
             margin-bottom: 1.5rem;
+            position: relative;
         }
 
         .form-group label {
@@ -61,22 +112,76 @@
         .form-group textarea {
             width: 100%;
             padding: 0.75rem;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--border-color);
             border-radius: 0.375rem;
             font-size: 1rem;
-            background-color: #ffffff;
+            background-color: var(--input-bg);
+            color: var(--text-color);
             transition: border-color 0.2s ease;
         }
 
         .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #000000;
+            border-color: var(--text-color);
         }
 
         .form-group textarea {
             min-height: 60px;
             resize: vertical;
+        }
+
+        .fare-input {
+            position: relative;
+        }
+
+        .fare-input::before {
+            content: 'Rs ';
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-text);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .fare-input input {
+            padding-left: 2.5rem;
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--suggestion-bg);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 0.375rem 0.375rem;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .suggestions.show {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background-color: var(--suggestion-hover);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
         }
 
         .form-row {
@@ -88,8 +193,8 @@
         .btn {
             width: 100%;
             padding: 0.875rem;
-            background-color: #000000;
-            color: #ffffff;
+            background-color: var(--button-bg);
+            color: var(--button-text);
             border: none;
             border-radius: 0.375rem;
             font-size: 1rem;
@@ -100,26 +205,26 @@
         }
 
         .btn:hover {
-            background-color: #333333;
+            background-color: var(--button-hover);
         }
 
         .btn:active {
-            background-color: #555555;
+            background-color: var(--button-hover);
         }
 
         .btn.secondary {
-            background-color: #f5f5f5;
-            color: #000000;
-            border: 1px solid #e0e0e0;
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
         }
 
         .btn.secondary:hover {
-            background-color: #eeeeee;
+            background-color: var(--suggestion-hover);
         }
 
         .output {
-            background-color: #f9f9f9;
-            border: 1px solid #e0e0e0;
+            background-color: var(--output-bg);
+            border: 1px solid var(--border-color);
             border-radius: 0.375rem;
             padding: 1rem;
             margin-top: 1rem;
@@ -139,8 +244,8 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background-color: #000000;
-            color: #ffffff;
+            background-color: var(--button-bg);
+            color: var(--button-text);
             padding: 1rem;
             display: none;
             z-index: 1000;
@@ -179,22 +284,22 @@
         }
 
         .pwa-btn.add {
-            background-color: #ffffff;
-            color: #000000;
+            background-color: var(--button-text);
+            color: var(--button-bg);
         }
 
         .pwa-btn.dismiss {
             background-color: transparent;
-            color: #ffffff;
-            border: 1px solid #ffffff;
+            color: var(--button-text);
+            border: 1px solid var(--button-text);
         }
 
         .toast {
             position: fixed;
             top: 1rem;
             right: 1rem;
-            background-color: #000000;
-            color: #ffffff;
+            background-color: var(--button-bg);
+            color: var(--button-text);
             padding: 0.75rem 1rem;
             border-radius: 0.375rem;
             font-size: 0.9rem;
@@ -226,6 +331,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
             <h1>🚖 Taxi Booking</h1>
             <p>Generate your taxi booking details</p>
         </div>
@@ -243,17 +349,21 @@
 
             <div class="form-group">
                 <label for="pickup">Pickup Location</label>
-                <input type="text" id="pickup" placeholder="Enter pickup location" required>
+                <input type="text" id="pickup" placeholder="Enter pickup location" required autocomplete="off">
+                <div class="suggestions" id="pickupSuggestions"></div>
             </div>
 
             <div class="form-group">
                 <label for="dropoff">Drop-off Location</label>
-                <input type="text" id="dropoff" placeholder="Enter drop-off location" required>
+                <input type="text" id="dropoff" placeholder="Enter drop-off location" required autocomplete="off">
+                <div class="suggestions" id="dropoffSuggestions"></div>
             </div>
 
             <div class="form-group">
                 <label for="fare">Fare</label>
-                <input type="text" id="fare" placeholder="e.g., Rs 23000" required>
+                <div class="fare-input">
+                    <input type="text" id="fare" placeholder="23000" required>
+                </div>
             </div>
 
             <button type="submit" class="btn">Generate Booking Details</button>
@@ -279,6 +389,133 @@
     <script>
         let deferredPrompt;
         
+        // Storage keys
+        const STORAGE_KEYS = {
+            THEME: 'taxi-theme',
+            PICKUP_LOCATIONS: 'taxi-pickup-locations',
+            DROPOFF_LOCATIONS: 'taxi-dropoff-locations',
+            LAST_FARE: 'taxi-last-fare'
+        };
+
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+        }
+
+        function updateThemeButton(theme) {
+            const themeToggle = document.getElementById('themeToggle');
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            themeToggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
+            updateThemeButton(newTheme);
+        }
+
+        // Location suggestions management
+        function getStoredLocations(key) {
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function addLocationToStorage(key, location) {
+            if (!location.trim()) return;
+            
+            let locations = getStoredLocations(key);
+            
+            // Remove if already exists to avoid duplicates
+            locations = locations.filter(loc => loc.toLowerCase() !== location.toLowerCase());
+            
+            // Add to beginning of array
+            locations.unshift(location.trim());
+            
+            // Keep only last 10 locations
+            if (locations.length > 10) {
+                locations = locations.slice(0, 10);
+            }
+            
+            localStorage.setItem(key, JSON.stringify(locations));
+        }
+
+        function showSuggestions(inputElement, suggestionsElement, locations, query) {
+            if (!query.trim()) {
+                suggestionsElement.classList.remove('show');
+                return;
+            }
+
+            const filtered = locations.filter(loc => 
+                loc.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                suggestionsElement.classList.remove('show');
+                return;
+            }
+
+            suggestionsElement.innerHTML = filtered
+                .map(location => `<div class="suggestion-item" data-location="${location}">${location}</div>`)
+                .join('');
+            
+            suggestionsElement.classList.add('show');
+
+            // Add click handlers to suggestions
+            suggestionsElement.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    inputElement.value = item.dataset.location;
+                    suggestionsElement.classList.remove('show');
+                    inputElement.focus();
+                });
+            });
+        }
+
+        function setupLocationInput(inputId, suggestionsId, storageKey) {
+            const input = document.getElementById(inputId);
+            const suggestions = document.getElementById(suggestionsId);
+            let locations = getStoredLocations(storageKey);
+
+            input.addEventListener('input', (e) => {
+                showSuggestions(input, suggestions, locations, e.target.value);
+            });
+
+            input.addEventListener('focus', (e) => {
+                if (e.target.value.trim()) {
+                    showSuggestions(input, suggestions, locations, e.target.value);
+                }
+            });
+
+            input.addEventListener('blur', (e) => {
+                // Delay hiding to allow click on suggestions
+                setTimeout(() => {
+                    suggestions.classList.remove('show');
+                }, 150);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    suggestions.classList.remove('show');
+                }
+            });
+
+            return input;
+        }
+
+        // Fare formatting
+        function formatFareInput(input) {
+            let value = input.value.replace(/[^\d]/g, '');
+            input.value = value;
+        }
+
+        function formatFareForDisplay(fare) {
+            return fare ? `Rs ${fare}` : '';
+        }
+
         // Check if device is mobile
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -332,20 +569,38 @@
             const dropoff = document.getElementById('dropoff').value;
             const fare = document.getElementById('fare').value;
             
+            // Store locations for future suggestions
+            addLocationToStorage(STORAGE_KEYS.PICKUP_LOCATIONS, pickup);
+            addLocationToStorage(STORAGE_KEYS.DROPOFF_LOCATIONS, dropoff);
+            
+            // Store fare for next time
+            if (fare.trim()) {
+                localStorage.setItem(STORAGE_KEYS.LAST_FARE, fare);
+            }
+            
             const formattedDate = formatDate(date);
             const formattedTime = formatTime(time);
+            const formattedFare = formatFareForDisplay(fare);
             
             const output = `Date: ${formattedDate}
 Time: ${formattedTime}
 Pickup Location: ${pickup}
 Drop-off Location: ${dropoff}
-Fare: ${fare}`;
+Fare: ${formattedFare}`;
             
             const outputElement = document.getElementById('output');
             outputElement.textContent = output;
             outputElement.classList.add('show');
             
             document.getElementById('copyBtn').style.display = 'block';
+        });
+
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+        // Fare input formatting
+        document.getElementById('fare').addEventListener('input', function(e) {
+            formatFareInput(e.target);
         });
 
         // Handle copy to clipboard
@@ -396,14 +651,28 @@ Fare: ${fare}`;
             localStorage.setItem('pwaDismissed', 'true');
         });
 
-        // Set current date and time as default
+        // Set current date and time as default and load saved data
         window.addEventListener('load', () => {
+            // Initialize theme
+            initTheme();
+            
+            // Set current date and time
             const now = new Date();
             const today = now.toISOString().split('T')[0];
             const currentTime = now.toTimeString().slice(0, 5);
             
             document.getElementById('date').value = today;
             document.getElementById('time').value = currentTime;
+
+            // Load last fare
+            const lastFare = localStorage.getItem(STORAGE_KEYS.LAST_FARE);
+            if (lastFare) {
+                document.getElementById('fare').value = lastFare;
+            }
+
+            // Setup location inputs with suggestions
+            setupLocationInput('pickup', 'pickupSuggestions', STORAGE_KEYS.PICKUP_LOCATIONS);
+            setupLocationInput('dropoff', 'dropoffSuggestions', STORAGE_KEYS.DROPOFF_LOCATIONS);
 
             // Check if PWA was previously dismissed
             if (localStorage.getItem('pwaDismissed') === 'true') {
