@@ -447,7 +447,7 @@
         }
 
         function formatFareForDisplay(fare) {
-            return fare ? `Rs ${fare}` : '';
+            return fare ? `₹ ${fare}` : '';
         }
 
         // Check if device is mobile
@@ -518,8 +518,8 @@
             
             const output = `📅 Date: ${formattedDate}
 🕐 Time: ${formattedTime}
-📍 Pickup Location: ${pickup}
-📍 Drop-off Location: ${dropoff}
+📍 Pickup : ${pickup}
+📍 Drop-off : ${dropoff}
 💰 Fare: ${formattedFare}`;
             
             const outputElement = document.getElementById('output');
