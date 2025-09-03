@@ -516,11 +516,11 @@
             const formattedTime = formatTime(time);
             const formattedFare = formatFareForDisplay(fare);
             
-            const output = `Date: ${formattedDate}
-Time: ${formattedTime}
-Pickup Location: ${pickup}
-Drop-off Location: ${dropoff}
-Fare: ${formattedFare}`;
+            const output = `📅 Date: ${formattedDate}
+🕐 Time: ${formattedTime}
+📍 Pickup Location: ${pickup}
+📍 Drop-off Location: ${dropoff}
+💰 Fare: ${formattedFare}`;
             
             const outputElement = document.getElementById('output');
             outputElement.textContent = output;
