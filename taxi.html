@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taxi Booking</title>
+    <meta name="description" content="Simple taxi booking form generator">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiVGF4aSBCb29raW5nIiwic2hvcnRfbmFtZSI6IlRheGkiLCJzdGFydF91cmwiOiIuL3RheGkuaHRtbCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiMwMDAwMDAiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhkcFpIUm9QU0kwT0NJZ2FHVnBaMmgwUFNJME9DSWdkbWxsZDBKdmVEMGlNQ0F3SURRNElEUTRJajQ4Y21WamRDQjNhV1IwYUQwaU5EZ2lJR2hsYVdkb2REMGlORGdpSUdacGJHdzlJaU13TURBaUx6NDhjR0YwYUNCa1BTSmJNaklzTlMxYU1qSTNJRFl1TlMxWU1qRXpJRFl1TlMxWU1qRXpJRE14TGpVZ1REQXpOUzF6TmpVdVJYazJOVEEyTkRGYUlWb3lNams2SUVFMU5EUWdOVFEwSURBZ01EQWJNU0EzTURGYU5EZzJJREEyTUZveU1UZ2dOREUySURJeE9DQTBNVFlnTWpFNElEUXhOaUJhVEdnd1dUazJXalptTVRFM0xWZ3hPVFJhUVhreU56TmFTeTFrTVRKWUlYcGVOaTViTlNBNE5TWTJJREl6Tmw0MkxqVWdORFEyU0c1VE5EQTNJRFkzT1YwNklqNDhMM0JoZEdnK1BDOXpkbWMrIiwic2l6ZXMiOiI0OHg0OCIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDQ4IDQ4Ij48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiMwMDAiLz48cGF0aCBkPSJbMjIsNS1aMjI3IDYuNS1YMjEzIDYuNS1YMjEzIDMxLjUgTDAzNS1zNjUuRXk2NTA2NDFaIVoyMjk6IEE1NDQgNTQ0IDAgMDAaMSA3MDFaNDg2IDA2MFoyMTggNDE2IDIxOCA0MTYgMjE4IDQxNiBaIExoMFk5NlpmMTE3LVgxOTRaQXkyNzNaUy1kMTJYIXpeNi5bNSA4NTY2IDIzNl42LjUgNDQ2U241NDA3IDY3OV02Il0+PC9wYXRoPjwvc3ZnPg==">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            background-color: #ffffff;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #000000;
+        }
+
+        .form-group textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.875rem;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+        .btn:hover {
+            background-color: #333333;
+        }
+
+        .btn:active {
+            background-color: #555555;
+        }
+
+        .btn.secondary {
+            background-color: #f5f5f5;
+            color: #000000;
+            border: 1px solid #e0e0e0;
+        }
+
+        .btn.secondary:hover {
+            background-color: #eeeeee;
+        }
+
+        .output {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-line;
+            min-height: 120px;
+            display: none;
+        }
+
+        .output.show {
+            display: block;
+        }
+
+        .pwa-prompt {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #000000;
+            color: #ffffff;
+            padding: 1rem;
+            display: none;
+            z-index: 1000;
+        }
+
+        .pwa-prompt.show {
+            display: block;
+        }
+
+        .pwa-content {
+            max-width: 400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .pwa-text {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .pwa-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pwa-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .pwa-btn.add {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        .pwa-btn.dismiss {
+            background-color: transparent;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+        }
+
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background-color: #000000;
+            color: #ffffff;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.9rem;
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem 0.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .form-row .form-group:first-child {
+                margin-bottom: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚖 Taxi Booking</h1>
+            <p>Generate your taxi booking details</p>
+        </div>
+
+        <form id="taxiForm">
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="time">Time</label>
+                <input type="time" id="time" required>
+            </div>
+
+            <div class="form-group">
+                <label for="pickup">Pickup Location</label>
+                <input type="text" id="pickup" placeholder="Enter pickup location" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dropoff">Drop-off Location</label>
+                <input type="text" id="dropoff" placeholder="Enter drop-off location" required>
+            </div>
+
+            <div class="form-group">
+                <label for="fare">Fare</label>
+                <input type="text" id="fare" placeholder="e.g., Rs 23000" required>
+            </div>
+
+            <button type="submit" class="btn">Generate Booking Details</button>
+        </form>
+
+        <div id="output" class="output"></div>
+        
+        <button id="copyBtn" class="btn secondary" style="display: none;">Copy to Clipboard</button>
+    </div>
+
+    <div id="pwaPrompt" class="pwa-prompt">
+        <div class="pwa-content">
+            <div class="pwa-text">Add Taxi Booking to your home screen for quick access</div>
+            <div class="pwa-buttons">
+                <button id="pwaAdd" class="pwa-btn add">Add</button>
+                <button id="pwaDismiss" class="pwa-btn dismiss">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let deferredPrompt;
+        
+        // Check if device is mobile
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        // Format date to ordinal format
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate();
+            const month = date.toLocaleDateString('en-US', { month: 'short' });
+            
+            const ordinal = (day) => {
+                if (day > 3 && day < 21) return day + 'th';
+                switch (day % 10) {
+                    case 1: return day + 'st';
+                    case 2: return day + 'nd';
+                    case 3: return day + 'rd';
+                    default: return day + 'th';
+                }
+            };
+            
+            return `${ordinal(day)} ${month}`;
+        }
+
+        // Format time to 12-hour format
+        function formatTime(timeString) {
+            const [hours, minutes] = timeString.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'pm' : 'am';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${minutes}${ampm}`;
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Handle form submission
+        document.getElementById('taxiForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const pickup = document.getElementById('pickup').value;
+            const dropoff = document.getElementById('dropoff').value;
+            const fare = document.getElementById('fare').value;
+            
+            const formattedDate = formatDate(date);
+            const formattedTime = formatTime(time);
+            
+            const output = `Date: ${formattedDate}
+Time: ${formattedTime}
+Pickup Location: ${pickup}
+Drop-off Location: ${dropoff}
+Fare: ${fare}`;
+            
+            const outputElement = document.getElementById('output');
+            outputElement.textContent = output;
+            outputElement.classList.add('show');
+            
+            document.getElementById('copyBtn').style.display = 'block';
+        });
+
+        // Handle copy to clipboard
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const output = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(output).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = output;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast('Copied to clipboard!');
+            });
+        });
+
+        // PWA functionality
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            if (isMobile()) {
+                setTimeout(() => {
+                    document.getElementById('pwaPrompt').classList.add('show');
+                }, 3000);
+            }
+        });
+
+        document.getElementById('pwaAdd').addEventListener('click', () => {
+            document.getElementById('pwaPrompt').classList.remove('show');
+            
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast('App added to home screen!');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        });
+
+        document.getElementById('pwaDismiss').addEventListener('click', () => {
+            document.getElementById('pwaPrompt').classList.remove('show');
+            localStorage.setItem('pwaDismissed', 'true');
+        });
+
+        // Set current date and time as default
+        window.addEventListener('load', () => {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().slice(0, 5);
+            
+            document.getElementById('date').value = today;
+            document.getElementById('time').value = currentTime;
+
+            // Check if PWA was previously dismissed
+            if (localStorage.getItem('pwaDismissed') === 'true') {
+                return;
+            }
+
+            // Show PWA prompt for mobile users after a delay if not already shown
+            if (isMobile() && !deferredPrompt) {
+                setTimeout(() => {
+                    if (!document.getElementById('pwaPrompt').classList.contains('show')) {
+                        document.getElementById('pwaPrompt').classList.add('show');
+                    }
+                }, 5000);
+            }
+        });
+
+        // Service Worker registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript;base64,Y29uc3QgQ0FDSEVfTkFNRSA9ICd0YXhpLWJvb2tpbmctdjEnOwpjb25zdCB1cmxzVG9DYWNoZSA9IFsKICAnLi8nLAogICcuL3RheGkuaHRtbCcKXTsKCnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignaW5zdGFsbCcsIChldmVudCkgPT4gewogIGV2ZW50LndhaXRVbnRpbCgKICAgIGNhY2hlcy5vcGVuKENBQ0hFX05BTUUpCiAgICAgIC50aGVuKChjYWNoZSkgPT4gewogICAgICAgIHJldHVybiBjYWNoZS5hZGRBbGwodXJsc1RvQ2FjaGUpOwogICAgICB9KQogICk7Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIChldmVudCkgPT4gewogIGV2ZW50LnJlc3BvbmRXaXRoKAogICAgY2FjaGVzLm1hdGNoKGV2ZW50LnJlcXVlc3QpCiAgICAgIC50aGVuKChyZXNwb25zZSkgPT4gewogICAgICAgIGlmIChyZXNwb25zZSkgewogICAgICAgICAgcmV0dXJuIHJlc3BvbnNlOwogICAgICAgIH0KICAgICAgICByZXR1cm4gZmV0Y2goZXZlbnQucmVxdWVzdCk7CiAgICAgIH0pCiAgKTsKfSk7')
+                .catch(() => {
+                    // Service worker registration failed, but app still works
+                });
+            });
+        }
+    </script>
+</body>
+</html>
