@@ -239,61 +239,6 @@
             display: block;
         }
 
-        .pwa-prompt {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            padding: 1rem;
-            display: none;
-            z-index: 1000;
-        }
-
-        .pwa-prompt.show {
-            display: block;
-        }
-
-        .pwa-content {
-            max-width: 400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .pwa-text {
-            flex: 1;
-            font-size: 0.9rem;
-        }
-
-        .pwa-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .pwa-btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 0.25rem;
-            font-size: 0.8rem;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .pwa-btn.add {
-            background-color: var(--button-text);
-            color: var(--button-bg);
-        }
-
-        .pwa-btn.dismiss {
-            background-color: transparent;
-            color: var(--button-text);
-            border: 1px solid var(--button-text);
-        }
-
         .toast {
             position: fixed;
             top: 1rem;
@@ -374,21 +319,9 @@
         <button id="copyBtn" class="btn secondary" style="display: none;">Copy to Clipboard</button>
     </div>
 
-    <div id="pwaPrompt" class="pwa-prompt">
-        <div class="pwa-content">
-            <div class="pwa-text">Add Taxi Booking to your home screen for quick access</div>
-            <div class="pwa-buttons">
-                <button id="pwaAdd" class="pwa-btn add">Add</button>
-                <button id="pwaDismiss" class="pwa-btn dismiss">Dismiss</button>
-            </div>
-        </div>
-    </div>
-
     <div id="toast" class="toast"></div>
 
     <script>
-        let deferredPrompt;
-        
         // Storage keys
         const STORAGE_KEYS = {
             THEME: 'taxi-theme',
@@ -620,37 +553,6 @@ Fare: ${formattedFare}`;
             });
         });
 
-        // PWA functionality
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            if (isMobile()) {
-                setTimeout(() => {
-                    document.getElementById('pwaPrompt').classList.add('show');
-                }, 3000);
-            }
-        });
-
-        document.getElementById('pwaAdd').addEventListener('click', () => {
-            document.getElementById('pwaPrompt').classList.remove('show');
-            
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        showToast('App added to home screen!');
-                    }
-                    deferredPrompt = null;
-                });
-            }
-        });
-
-        document.getElementById('pwaDismiss').addEventListener('click', () => {
-            document.getElementById('pwaPrompt').classList.remove('show');
-            localStorage.setItem('pwaDismissed', 'true');
-        });
-
         // Set current date and time as default and load saved data
         window.addEventListener('load', () => {
             // Initialize theme
@@ -673,20 +575,6 @@ Fare: ${formattedFare}`;
             // Setup location inputs with suggestions
             setupLocationInput('pickup', 'pickupSuggestions', STORAGE_KEYS.PICKUP_LOCATIONS);
             setupLocationInput('dropoff', 'dropoffSuggestions', STORAGE_KEYS.DROPOFF_LOCATIONS);
-
-            // Check if PWA was previously dismissed
-            if (localStorage.getItem('pwaDismissed') === 'true') {
-                return;
-            }
-
-            // Show PWA prompt for mobile users after a delay if not already shown
-            if (isMobile() && !deferredPrompt) {
-                setTimeout(() => {
-                    if (!document.getElementById('pwaPrompt').classList.contains('show')) {
-                        document.getElementById('pwaPrompt').classList.add('show');
-                    }
-                }, 5000);
-            }
         });
 
         // Service Worker registration for PWA
