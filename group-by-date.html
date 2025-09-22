@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Grouping Chart Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/index.min.js"></script>
+    <style>
+        /* Neo Brutalist Design System */
+        :root {
+            --background: #ffffff;
+            --foreground: #000000;
+            --primary: #ff3e41;
+            --secondary: #3633ff;
+            --accent: #ffde59;
+            --neutral: #e0e0e0;
+            --border-width: 3px;
+            --shadow-offset: 6px;
+            --box-shadow: 6px 6px 0 0 #000000;
+            --border-radius: 2px;
+            --font-family: 'Courier New', monospace;
+        }
+
+        .dark {
+            --background: #0f0f0f;
+            --foreground: #ffffff;
+            --primary: #ff5e54;
+            --secondary: #4d4aff;
+            --accent: #ffe066;
+            --neutral: #333333;
+            --box-shadow: 6px 6px 0 0 #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            overflow: visible;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: var(--border-width) solid var(--foreground);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+            background: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-section:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .input-section h3 {
+            color: var(--foreground);
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            border-bottom: var(--border-width) solid var(--foreground);
+            padding-bottom: 10px;
+        }
+
+        .input-area {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: var(--border-width) solid var(--foreground);
+            border-radius: var(--border-radius);
+            font-family: var(--font-family);
+            font-size: 14px;
+            font-weight: bold;
+            background: var(--background);
+            color: var(--foreground);
+            resize: vertical;
+            transition: all 0.2s ease;
+        }
+
+        .input-area:focus {
+            outline: none;
+            box-shadow: 4px 4px 0 0 var(--foreground);
+            transform: translate(-2px, -2px);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-weight: 800;
+            color: var(--foreground);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        select, input[type="number"] {
+            padding: 12px 15px;
+            border: var(--border-width) solid var(--foreground);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            box-shadow: 4px 4px 0 0 var(--foreground);
+            transform: translate(-2px, -2px);
+        }
+
+        .btn {
+            background: var(--secondary);
+            color: white;
+            border: var(--border-width) solid var(--foreground);
+            padding: 15px 30px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-family: var(--font-family);
+            box-shadow: var(--box-shadow);
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .btn:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 0 var(--foreground);
+        }
+
+        .chart-container {
+            background: var(--neutral);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-top: 30px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .chart-container:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--accent);
+            color: var(--foreground);
+            padding: 25px;
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .stat-card h4 {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .placeholder {
+            color: var(--foreground);
+            font-style: italic;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                padding: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 20px;
+            }
+
+            .filter-group {
+                justify-content: space-between;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                margin: 10px;
+            }
+
+            body {
+                padding: 10px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Date Grouping Chart Tool</h1>
+            <p>Analyze timestamp data by grouping entries by date with interactive filtering</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <h3>Input Timestamps</h3>
+                <textarea 
+                    id="timestampInput" 
+                    class="input-area" 
+                    placeholder="Paste your timestamps here, one per line (e.g., 9/22/2025 11:41:22)..."
+                ></textarea>
+            </div>
+
+            <div class="controls">
+                <div class="filter-group">
+                    <label for="groupBy">Group By:</label>
+                    <select id="groupBy">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filterType">Filter:</label>
+                    <select id="filterType">
+                        <option value="all">All Data</option>
+                        <option value="weeks">Last N Weeks</option>
+                        <option value="months">Last N Months</option>
+                        <option value="days">Last N Days</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group" id="filterValue" style="display: none;">
+                    <label for="filterAmount">Amount:</label>
+                    <input type="number" id="filterAmount" value="4" min="1" max="100">
+                </div>
+
+                <button class="btn" onclick="processData()">Generate Chart</button>
+                <button class="btn" onclick="loadSampleData()">Load Sample</button>
+                <button class="btn" onclick="clearData()">Clear</button>
+            </div>
+
+            <div id="statsContainer" style="display: none;">
+                <div class="stats">
+                    <div class="stat-card">
+                        <h4>Total Entries</h4>
+                        <div class="value" id="totalEntries">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Date Range</h4>
+                        <div class="value" id="dateRange">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Peak Day</h4>
+                        <div class="value" id="peakDay">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="avgPerDayLabel">Average per Day</h4>
+                        <div class="value" id="avgPerDay">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div id="chartPlaceholder" class="placeholder">
+                    Enter timestamps above and click "Generate Chart" to see your data visualization
+                </div>
+                <div class="chart-wrapper" id="chartWrapper" style="display: none;">
+                    <canvas id="dateChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let originalData = [];
+
+        // Show/hide filter amount input based on filter type
+        document.getElementById('filterType').addEventListener('change', function() {
+            const filterValue = document.getElementById('filterValue');
+            if (this.value === 'all') {
+                filterValue.style.display = 'none';
+            } else {
+                filterValue.style.display = 'flex';
+            }
+        });
+
+        function parseTimestamps(input) {
+            const lines = input.trim().split('\n').filter(line => line.trim());
+            const timestamps = [];
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed) {
+                    // Handle MM/DD/YYYY format specifically
+                    let date;
+                    
+                    // Try to parse MM/DD/YYYY HH:MM:SS format
+                    const mmddyyyyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s*(.*)$/);
+                    if (mmddyyyyMatch) {
+                        const [, month, day, year, timeStr] = mmddyyyyMatch;
+                        
+                        // Parse time components if present
+                        let hours = 0, minutes = 0, seconds = 0;
+                        if (timeStr.trim()) {
+                            const timeMatch = timeStr.trim().match(/^(\d{1,2}):(\d{1,2}):(\d{1,2})$/);
+                            if (timeMatch) {
+                                hours = parseInt(timeMatch[1]);
+                                minutes = parseInt(timeMatch[2]);
+                                seconds = parseInt(timeMatch[3]);
+                            }
+                        }
+                        
+                        // Create date using local timezone (not UTC)
+                        date = new Date(
+                            parseInt(year),
+                            parseInt(month) - 1, // JavaScript months are 0-indexed
+                            parseInt(day),
+                            hours,
+                            minutes,
+                            seconds
+                        );
+                    } else {
+                        // Fallback to default Date parsing
+                        date = new Date(trimmed);
+                    }
+                    
+                    if (!isNaN(date.getTime())) {
+                        timestamps.push(date);
+                        console.log(`Parsed: "${trimmed}" -> ${date.toLocaleString()} (${date.toDateString()})`);
+                    } else {
+                        console.warn(`Failed to parse: "${trimmed}"`);
+                    }
+                }
+            }
+            
+            console.log(`Total parsed timestamps: ${timestamps.length}`);
+            return timestamps;
+        }
+
+        function groupByDate(timestamps) {
+            const groups = {};
+            
+            for (const timestamp of timestamps) {
+                // Use local date instead of UTC to avoid timezone issues
+                const year = timestamp.getFullYear();
+                const month = String(timestamp.getMonth() + 1).padStart(2, '0');
+                const day = String(timestamp.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
+                
+                groups[dateStr] = (groups[dateStr] || 0) + 1;
+                console.log(`Timestamp: ${timestamp.toLocaleString()} -> Date: ${dateStr}`);
+            }
+            
+            console.log('Daily grouping:', groups);
+            return groups;
+        }
+
+        function groupByWeek(timestamps) {
+            const groups = {};
+            
+            for (const timestamp of timestamps) {
+                // Get the start of the week (Sunday) using local time
+                const date = new Date(timestamp);
+                const dayOfWeek = date.getDay();
+                const startOfWeek = new Date(date);
+                startOfWeek.setDate(date.getDate() - dayOfWeek);
+                startOfWeek.setHours(0, 0, 0, 0);
+                
+                // Use local date format for consistency
+                const year = startOfWeek.getFullYear();
+                const month = String(startOfWeek.getMonth() + 1).padStart(2, '0');
+                const day = String(startOfWeek.getDate()).padStart(2, '0');
+                const weekKey = `${year}-${month}-${day}`;
+                
+                groups[weekKey] = (groups[weekKey] || 0) + 1;
+            }
+            
+            console.log('Weekly grouping:', groups);
+            return groups;
+        }
+
+        function groupByMonth(timestamps) {
+            const groups = {};
+            
+            for (const timestamp of timestamps) {
+                // Use local date for month grouping
+                const year = timestamp.getFullYear();
+                const month = String(timestamp.getMonth() + 1).padStart(2, '0');
+                const monthKey = `${year}-${month}-01`;
+                groups[monthKey] = (groups[monthKey] || 0) + 1;
+            }
+            
+            console.log('Monthly grouping:', groups);
+            return groups;
+        }
+
+        function groupData(timestamps, groupBy) {
+            switch (groupBy) {
+                case 'weekly':
+                    return groupByWeek(timestamps);
+                case 'monthly':
+                    return groupByMonth(timestamps);
+                default:
+                    return groupByDate(timestamps);
+            }
+        }
+
+        function filterData(data, filterType, filterAmount) {
+            if (filterType === 'all') {
+                return data;
+            }
+
+            const now = new Date();
+            const cutoffDate = new Date();
+            
+            switch (filterType) {
+                case 'days':
+                    cutoffDate.setDate(now.getDate() - filterAmount);
+                    break;
+                case 'weeks':
+                    cutoffDate.setDate(now.getDate() - (filterAmount * 7));
+                    break;
+                case 'months':
+                    cutoffDate.setMonth(now.getMonth() - filterAmount);
+                    break;
+            }
+            
+            const filtered = {};
+            for (const [date, count] of Object.entries(data)) {
+                if (new Date(date) >= cutoffDate) {
+                    filtered[date] = count;
+                }
+            }
+            
+            return filtered;
+        }
+
+        function updateStats(data) {
+            const dates = Object.keys(data).sort();
+            const counts = Object.values(data);
+            const totalEntries = counts.reduce((sum, count) => sum + count, 0);
+            const groupBy = document.getElementById('groupBy').value;
+            
+            document.getElementById('totalEntries').textContent = totalEntries;
+            
+            if (dates.length > 0) {
+                const firstDate = new Date(dates[0]).toLocaleDateString();
+                const lastDate = new Date(dates[dates.length - 1]).toLocaleDateString();
+                document.getElementById('dateRange').textContent = dates.length === 1 ? firstDate : `${firstDate} - ${lastDate}`;
+                
+                // Find the peak day correctly by mapping dates to their counts
+                const maxCount = Math.max(...counts);
+                let peakDate = null;
+                
+                // Find the date that corresponds to the maximum count
+                for (const [date, count] of Object.entries(data)) {
+                    if (count === maxCount) {
+                        peakDate = new Date(date);
+                        break;
+                    }
+                }
+                
+                console.log('Peak calculation:', { data, maxCount, peakDate: peakDate?.toISOString() });
+                
+                let peakLabel;
+                if (peakDate) {
+                    switch (groupBy) {
+                        case 'weekly':
+                            const endOfWeek = new Date(peakDate);
+                            endOfWeek.setDate(peakDate.getDate() + 6);
+                            peakLabel = `${peakDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                            break;
+                        case 'monthly':
+                            peakLabel = peakDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                            break;
+                        default:
+                            peakLabel = peakDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+                    
+                    document.getElementById('peakDay').textContent = `${peakLabel} (${maxCount})`;
+                } else {
+                    document.getElementById('peakDay').textContent = '-';
+                }
+                
+                const periodLabel = {
+                    'daily': 'Day',
+                    'weekly': 'Week',
+                    'monthly': 'Month'
+                }[groupBy];
+                
+                const avgPer = (totalEntries / dates.length).toFixed(1);
+                document.getElementById('avgPerDay').textContent = avgPer;
+                
+                // Update the label for average
+                document.getElementById('avgPerDayLabel').textContent = `Average per ${periodLabel}`;
+            } else {
+                document.getElementById('dateRange').textContent = '-';
+                document.getElementById('peakDay').textContent = '-';
+                document.getElementById('avgPerDay').textContent = '0';
+            }
+            
+            document.getElementById('statsContainer').style.display = 'block';
+        }
+
+        function createChart(data) {
+            const ctx = document.getElementById('dateChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (chart) {
+                chart.destroy();
+            }
+            
+            const dates = Object.keys(data).sort();
+            const counts = dates.map(date => data[date]);
+            const groupBy = document.getElementById('groupBy').value;
+            
+            // Format dates for display based on grouping
+            const labels = dates.map(date => {
+                const d = new Date(date);
+                switch (groupBy) {
+                    case 'weekly':
+                        const endOfWeek = new Date(d);
+                        endOfWeek.setDate(d.getDate() + 6);
+                        return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                    case 'monthly':
+                        return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    default:
+                        return d.toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: dates.length > 60 ? undefined : 'numeric'
+                        });
+                }
+            });
+            
+            // Set chart type based on grouping
+            const chartType = groupBy === 'daily' ? 'line' : 'bar';
+            
+            const chartTitle = {
+                'daily': 'Daily Activity',
+                'weekly': 'Weekly Activity', 
+                'monthly': 'Monthly Activity'
+            }[groupBy];
+
+            const yAxisLabel = {
+                'daily': 'Count per Day',
+                'weekly': 'Count per Week',
+                'monthly': 'Count per Month'
+            }[groupBy];
+            
+            chart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: yAxisLabel,
+                        data: counts,
+                        borderColor: 'rgb(102, 126, 234)',
+                        backgroundColor: chartType === 'bar' ? 'rgba(102, 126, 234, 0.6)' : 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: chartType === 'line',
+                        tension: chartType === 'line' ? 0.4 : 0,
+                        pointBackgroundColor: 'rgb(102, 126, 234)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: chartType === 'line' ? 4 : 0,
+                        pointHoverRadius: chartType === 'line' ? 6 : 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: chartTitle,
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: groupBy === 'daily' ? 'Date' : groupBy === 'weekly' ? 'Week' : 'Month',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                maxTicksLimit: groupBy === 'daily' ? 10 : 8,
+                                maxRotation: groupBy === 'weekly' ? 45 : 0
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Count',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+            
+            // Show chart and hide placeholder
+            document.getElementById('chartPlaceholder').style.display = 'none';
+            document.getElementById('chartWrapper').style.display = 'block';
+        }
+
+        function processData() {
+            const input = document.getElementById('timestampInput').value;
+            if (!input.trim()) {
+                alert('Please enter some timestamps first!');
+                return;
+            }
+            
+            console.log('Processing input:', input);
+            
+            const timestamps = parseTimestamps(input);
+            if (timestamps.length === 0) {
+                alert('No valid timestamps found. Please check your input format.');
+                return;
+            }
+            
+            console.log(`Successfully parsed ${timestamps.length} timestamps`);
+            
+            // Get grouping type
+            const groupBy = document.getElementById('groupBy').value;
+            console.log('Grouping by:', groupBy);
+            
+            // Store original data with selected grouping
+            originalData = groupData(timestamps, groupBy);
+            console.log('Original grouped data:', originalData);
+            
+            // Apply filters
+            const filterType = document.getElementById('filterType').value;
+            const filterAmount = parseInt(document.getElementById('filterAmount').value) || 4;
+            
+            const filteredData = filterData(originalData, filterType, filterAmount);
+            console.log('Filtered data:', filteredData);
+            
+            if (Object.keys(filteredData).length === 0) {
+                alert('No data available for the selected filter range.');
+                return;
+            }
+            
+            updateStats(filteredData);
+            createChart(filteredData);
+        }
+
+        function clearData() {
+            document.getElementById('timestampInput').value = '';
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+            document.getElementById('chartPlaceholder').style.display = 'block';
+            document.getElementById('chartWrapper').style.display = 'none';
+            document.getElementById('statsContainer').style.display = 'none';
+            originalData = [];
+        }
+
+        // Add sample data button for testing
+        function loadSampleData() {
+            const sampleData = `9/22/2025 11:41:22
+9/22/2025 11:40:53
+9/22/2025 11:10:55
+9/22/2025 11:10:54
+9/20/2025 16:00:58
+9/20/2025 0:41:38
+9/20/2025 0:41:32
+9/19/2025 19:41:56
+9/19/2025 17:48:30
+9/19/2025 17:34:11
+9/19/2025 16:02:13`;
+            document.getElementById('timestampInput').value = sampleData;
+        }
+
+        // Auto-process when groupBy or filter changes (if data exists)
+        document.getElementById('groupBy').addEventListener('change', function() {
+            if (document.getElementById('timestampInput').value.trim()) {
+                processData();
+            }
+        });
+
+        document.getElementById('filterType').addEventListener('change', function() {
+            if (originalData && Object.keys(originalData).length > 0) {
+                processData();
+            }
+        });
+
+        document.getElementById('filterAmount').addEventListener('input', function() {
+            if (originalData && Object.keys(originalData).length > 0) {
+                processData();
+            }
+        });
+    </script>
+</body>
+</html>
