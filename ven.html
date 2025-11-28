@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venn Diagram Creator</title>
+    <style>
+        /* Neo Brutalist Design System */
+        :root {
+            --background: #ffffff;
+            --foreground: #000000;
+            --primary: #ff3e41;
+            --secondary: #3633ff;
+            --accent: #ffde59;
+            --tertiary: #00d9ff;
+            --neutral: #e0e0e0;
+            --border-width: 3px;
+            --shadow-offset: 6px;
+            --box-shadow: 6px 6px 0 0 #000000;
+            --border-radius: 2px;
+            --font-family: 'Courier New', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            overflow: visible;
+        }
+
+        .header {
+            background: var(--secondary);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: var(--border-width) solid var(--foreground);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .content {
+            padding: 40px;
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .input-column {
+            flex: 1;
+            min-width: 400px;
+        }
+
+        .output-column {
+            flex: 1.5;
+            min-width: 500px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+            background: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-section:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--foreground);
+            margin-bottom: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            border-bottom: var(--border-width) solid var(--foreground);
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-row {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 800;
+            color: var(--foreground);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: var(--border-width) solid var(--foreground);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-family);
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-size: 0.9rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 4px 4px 0 0 var(--foreground);
+            transform: translate(-2px, -2px);
+        }
+
+        .help-text {
+            font-size: 0.75rem;
+            color: var(--foreground);
+            margin-top: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: var(--border-width) solid var(--foreground);
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-family: var(--font-family);
+            box-shadow: var(--box-shadow);
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 var(--foreground);
+        }
+
+        .btn:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 0 var(--foreground);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: var(--foreground);
+        }
+
+        .diagram-container {
+            background: var(--background);
+            border: var(--border-width) solid var(--foreground);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #vennCanvas {
+            max-width: 100%;
+            border: var(--border-width) solid var(--foreground);
+        }
+
+        .circle-inputs {
+            display: grid;
+            gap: 15px;
+        }
+
+        .circle-group {
+            border: var(--border-width) solid var(--foreground);
+            padding: 15px;
+            background: var(--neutral);
+        }
+
+        .circle-group.primary {
+            background: rgba(255, 62, 65, 0.1);
+        }
+
+        .circle-group.secondary {
+            background: rgba(54, 51, 255, 0.1);
+        }
+
+        .circle-group.tertiary {
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .toggle-section {
+            margin-bottom: 20px;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .toggle-label input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .input-column, .output-column {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                margin: 10px;
+            }
+
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Venn Diagram Creator</h1>
+            <p>Create beautiful 2 or 3 circle Venn diagrams instantly</p>
+        </div>
+
+        <div class="content">
+            <!-- Left Column - Inputs -->
+            <div class="input-column">
+                <!-- Circle Count -->
+                <div class="input-section">
+                    <h3 class="section-title">Configuration</h3>
+                    <div class="input-group">
+                        <div class="input-row">
+                            <label for="circleCount">Number of Circles:</label>
+                            <select id="circleCount">
+                                <option value="2">2 Circles</option>
+                                <option value="3">3 Circles</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Circle Labels -->
+                <div class="input-section">
+                    <h3 class="section-title">Circle Labels</h3>
+                    <div class="circle-inputs">
+                        <div class="circle-group primary">
+                            <div class="input-row">
+                                <label for="labelA">Circle A:</label>
+                                <input type="text" id="labelA" value="Set A" maxlength="20">
+                            </div>
+                            <div class="input-row">
+                                <label for="itemsA">Items (comma separated):</label>
+                                <textarea id="itemsA" placeholder="Item 1, Item 2, Item 3">Dogs, Cats, Birds</textarea>
+                                <div class="help-text">Items unique to Circle A</div>
+                            </div>
+                        </div>
+
+                        <div class="circle-group secondary">
+                            <div class="input-row">
+                                <label for="labelB">Circle B:</label>
+                                <input type="text" id="labelB" value="Set B" maxlength="20">
+                            </div>
+                            <div class="input-row">
+                                <label for="itemsB">Items (comma separated):</label>
+                                <textarea id="itemsB" placeholder="Item 1, Item 2, Item 3">Fish, Rabbits, Hamsters</textarea>
+                                <div class="help-text">Items unique to Circle B</div>
+                            </div>
+                        </div>
+
+                        <div class="circle-group tertiary" id="circleCGroup">
+                            <div class="input-row">
+                                <label for="labelC">Circle C:</label>
+                                <input type="text" id="labelC" value="Set C" maxlength="20">
+                            </div>
+                            <div class="input-row">
+                                <label for="itemsC">Items (comma separated):</label>
+                                <textarea id="itemsC" placeholder="Item 1, Item 2, Item 3">Turtles, Lizards, Snakes</textarea>
+                                <div class="help-text">Items unique to Circle C</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Intersections -->
+                <div class="input-section">
+                    <h3 class="section-title">Intersections</h3>
+                    <div class="input-group">
+                        <div class="input-row">
+                            <label for="itemsAB">A ∩ B:</label>
+                            <textarea id="itemsAB" placeholder="Items in both A and B">Parrots</textarea>
+                        </div>
+
+                        <div class="input-row" id="itemsBCRow">
+                            <label for="itemsBC">B ∩ C:</label>
+                            <textarea id="itemsBC" placeholder="Items in both B and C">Iguanas</textarea>
+                        </div>
+
+                        <div class="input-row" id="itemsACRow">
+                            <label for="itemsAC">A ∩ C:</label>
+                            <textarea id="itemsAC" placeholder="Items in both A and C">Frogs</textarea>
+                        </div>
+
+                        <div class="input-row" id="itemsABCRow">
+                            <label for="itemsABC">A ∩ B ∩ C:</label>
+                            <textarea id="itemsABC" placeholder="Items in all three">Pets</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <button class="btn" onclick="updateDiagram()">🎨 Update Diagram</button>
+                <button class="btn btn-secondary" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+                <button class="btn btn-secondary" onclick="downloadDiagram()">💾 Download as PNG</button>
+            </div>
+
+            <!-- Right Column - Diagram -->
+            <div class="output-column">
+                <div class="diagram-container">
+                    <canvas id="vennCanvas" width="700" height="600"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('vennCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const circleCount = document.getElementById('circleCount');
+        const labelA = document.getElementById('labelA');
+        const labelB = document.getElementById('labelB');
+        const labelC = document.getElementById('labelC');
+        const itemsA = document.getElementById('itemsA');
+        const itemsB = document.getElementById('itemsB');
+        const itemsC = document.getElementById('itemsC');
+        const itemsAB = document.getElementById('itemsAB');
+        const itemsBC = document.getElementById('itemsBC');
+        const itemsAC = document.getElementById('itemsAC');
+        const itemsABC = document.getElementById('itemsABC');
+
+        // Circle C related elements
+        const circleCGroup = document.getElementById('circleCGroup');
+        const itemsBCRow = document.getElementById('itemsBCRow');
+        const itemsACRow = document.getElementById('itemsACRow');
+        const itemsABCRow = document.getElementById('itemsABCRow');
+
+        circleCount.addEventListener('change', function() {
+            const is3Circle = this.value === '3';
+            circleCGroup.style.display = is3Circle ? 'block' : 'none';
+            itemsBCRow.style.display = is3Circle ? 'block' : 'none';
+            itemsACRow.style.display = is3Circle ? 'block' : 'none';
+            itemsABCRow.style.display = is3Circle ? 'block' : 'none';
+            updateDiagram();
+        });
+
+        // Auto-update on input
+        [labelA, labelB, labelC, itemsA, itemsB, itemsC, itemsAB, itemsBC, itemsAC, itemsABC].forEach(elem => {
+            elem.addEventListener('input', updateDiagram);
+        });
+
+        function wrapText(text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = ctx.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        function drawText(text, x, y, maxWidth = 140, fontSize = 14) {
+            if (!text) return;
+
+            ctx.font = `600 ${fontSize}px Arial, Helvetica, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const lines = wrapText(text, maxWidth);
+            const lineHeight = fontSize + 4;
+            const totalHeight = lines.length * lineHeight;
+            const startY = y - (totalHeight / 2) + (lineHeight / 2);
+
+            // Draw background with padding
+            const padding = 8;
+            const bgWidth = Math.max(...lines.map(line => ctx.measureText(line).width)) + padding * 2;
+            const bgHeight = totalHeight + padding * 2;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillRect(x - bgWidth / 2, startY - padding - lineHeight / 2, bgWidth, bgHeight);
+
+            // Draw border around background
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x - bgWidth / 2, startY - padding - lineHeight / 2, bgWidth, bgHeight);
+
+            // Draw text
+            ctx.fillStyle = '#000000';
+            lines.forEach((line, i) => {
+                ctx.fillText(line, x, startY + (i * lineHeight));
+            });
+        }
+
+        function updateDiagram() {
+            const is3Circle = circleCount.value === '3';
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (is3Circle) {
+                draw3CircleVenn();
+            } else {
+                draw2CircleVenn();
+            }
+        }
+
+        function draw2CircleVenn() {
+            const centerY = 300;
+            const radius = 150;
+            const offset = 100;
+
+            const centerA = { x: 250, y: centerY };
+            const centerB = { x: 450, y: centerY };
+
+            // Draw circles with fill
+            ctx.globalAlpha = 0.3;
+
+            // Circle A
+            ctx.fillStyle = '#ff3e41';
+            ctx.beginPath();
+            ctx.arc(centerA.x, centerA.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Circle B
+            ctx.fillStyle = '#3633ff';
+            ctx.beginPath();
+            ctx.arc(centerB.x, centerB.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = 1;
+
+            // Draw circle borders
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            ctx.arc(centerA.x, centerA.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(centerB.x, centerB.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw labels
+            ctx.font = 'bold 20px Arial, Helvetica, sans-serif';
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+
+            ctx.fillText(labelA.value.toUpperCase(), centerA.x, 100);
+            ctx.fillText(labelB.value.toUpperCase(), centerB.x, 100);
+
+            // Draw items
+            const itemsListA = itemsA.value.split(',').map(s => s.trim()).filter(s => s);
+            const itemsListB = itemsB.value.split(',').map(s => s.trim()).filter(s => s);
+            const itemsListAB = itemsAB.value.split(',').map(s => s.trim()).filter(s => s);
+
+            // A only
+            drawText(itemsListA.join('\n'), centerA.x - 80, centerY);
+
+            // B only
+            drawText(itemsListB.join('\n'), centerB.x + 80, centerY);
+
+            // A ∩ B
+            drawText(itemsListAB.join('\n'), 350, centerY);
+        }
+
+        function draw3CircleVenn() {
+            const centerY = 320;
+            const radius = 140;
+            const topY = 200;
+
+            const centerA = { x: 280, y: topY };
+            const centerB = { x: 420, y: topY };
+            const centerC = { x: 350, y: centerY + 30 };
+
+            // Draw circles with fill
+            ctx.globalAlpha = 0.3;
+
+            // Circle A
+            ctx.fillStyle = '#ff3e41';
+            ctx.beginPath();
+            ctx.arc(centerA.x, centerA.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Circle B
+            ctx.fillStyle = '#3633ff';
+            ctx.beginPath();
+            ctx.arc(centerB.x, centerB.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Circle C
+            ctx.fillStyle = '#00d9ff';
+            ctx.beginPath();
+            ctx.arc(centerC.x, centerC.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = 1;
+
+            // Draw circle borders
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            ctx.arc(centerA.x, centerA.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(centerB.x, centerB.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(centerC.x, centerC.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw labels
+            ctx.font = 'bold 20px Arial, Helvetica, sans-serif';
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+
+            ctx.fillText(labelA.value.toUpperCase(), centerA.x, 50);
+            ctx.fillText(labelB.value.toUpperCase(), centerB.x, 50);
+            ctx.fillText(labelC.value.toUpperCase(), centerC.x, 530);
+
+            // Draw items
+            const itemsListA = itemsA.value.split(',').map(s => s.trim()).filter(s => s);
+            const itemsListB = itemsB.value.split(',').map(s => s.trim()).filter(s => s);
+            const itemsListC = itemsC.value.split(',').map(s => s.trim()).filter(s => s);
+            const itemsListAB = itemsAB.value.split(',').map(s => s.trim()).filter(s => s);
+            const itemsListBC = itemsBC.value.split(',').map(s => s.trim()).filter(s => s);
+            const itemsListAC = itemsAC.value.split(',').map(s => s.trim()).filter(s => s);
+            const itemsListABC = itemsABC.value.split(',').map(s => s.trim()).filter(s => s);
+
+            // A only (top left)
+            drawText(itemsListA.join('\n'), centerA.x - 70, topY - 60, 100, 12);
+
+            // B only (top right)
+            drawText(itemsListB.join('\n'), centerB.x + 70, topY - 60, 100, 12);
+
+            // C only (bottom)
+            drawText(itemsListC.join('\n'), centerC.x, centerY + 110, 100, 12);
+
+            // A ∩ B (top middle)
+            drawText(itemsListAB.join('\n'), 350, topY - 30, 100, 12);
+
+            // B ∩ C (right middle)
+            drawText(itemsListBC.join('\n'), 410, centerY + 10, 100, 12);
+
+            // A ∩ C (left middle)
+            drawText(itemsListAC.join('\n'), 290, centerY + 10, 100, 12);
+
+            // A ∩ B ∩ C (center)
+            drawText(itemsListABC.join('\n'), 350, topY + 60, 100, 12);
+        }
+
+        function downloadDiagram() {
+            const link = document.createElement('a');
+            link.download = 'venn-diagram.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        async function copyToClipboard() {
+            try {
+                canvas.toBlob(async (blob) => {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        alert('✓ Diagram copied to clipboard!');
+                    } catch (err) {
+                        console.error('Failed to copy:', err);
+                        alert('Failed to copy to clipboard. Please try downloading instead.');
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard. Please try downloading instead.');
+            }
+        }
+
+        // Initial draw
+        updateDiagram();
+    </script>
+</body>
+</html>
