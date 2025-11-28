@@ -201,6 +201,19 @@
         let lastLength = 0;
         let content = '';
 
+        // Load saved content
+        const savedContent = localStorage.getItem('w-note');
+        if (savedContent) {
+            content = savedContent;
+            lastLength = content.length;
+            input.value = content;
+            renderMarkdown();
+        }
+
+        function saveContent() {
+            localStorage.setItem('w-note', content);
+        }
+
         // Block deletion keys
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' || e.key === 'Delete') {
@@ -224,6 +237,7 @@
                 content = newValue;
                 lastLength = newValue.length;
                 renderMarkdown();
+                saveContent();
             } else {
                 // Restore previous content if deletion attempted
                 input.value = content;
@@ -240,6 +254,7 @@
             lastLength = content.length;
             input.selectionStart = input.selectionEnd = start + paste.length;
             renderMarkdown();
+            saveContent();
         });
 
         function renderMarkdown() {
@@ -279,6 +294,7 @@
                 content = '';
                 lastLength = 0;
                 input.value = '';
+                localStorage.removeItem('w-note');
                 renderMarkdown();
                 input.focus();
             }
