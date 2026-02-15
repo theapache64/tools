@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrawBlur - Selective Image Blur Tool</title>
+    <meta name="description" content="Upload images and blur specific portions by drawing rectangles. Download individually or in bulk.">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #111;
+            --accent: #4361ee;
+            --accent-hover: #3451de;
+            --danger: #e63946;
+            --danger-hover: #d62836;
+            --success: #2a9d8f;
+            --bg: #f4f4f4;
+            --card-bg: #fff;
+            --border: #222;
+            --border-w: 3px;
+            --shadow: 4px 4px 0px 0px rgba(0,0,0,0.9);
+            --shadow-sm: 2px 2px 0px 0px rgba(0,0,0,0.9);
+            --radius: 4px;
+            --font: 'Courier New', monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: var(--font-sans);
+            color: var(--primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--primary);
+            color: #fff;
+            padding: 1.5rem 2rem;
+            border-bottom: var(--border-w) solid var(--border);
+        }
+
+        .header h1 {
+            font-family: var(--font);
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.3rem;
+        }
+
+        /* Layout */
+        .app {
+            display: flex;
+            height: calc(100vh - 85px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            min-width: 260px;
+            background: var(--card-bg);
+            border-right: var(--border-w) solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 2px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header h2 {
+            font-family: var(--font);
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.9rem;
+            font-family: var(--font);
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: var(--border-w) solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: var(--shadow-sm);
+            white-space: nowrap;
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover { background: var(--danger-hover); }
+
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .btn-success:hover { background: #239084; }
+
+        .btn-outline {
+            background: var(--card-bg);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover { background: #eee; }
+
+        .btn-sm {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+        }
+
+        /* Thumbnail list */
+        .thumb-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .thumb-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem;
+            border: 2px solid transparent;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-bottom: 0.3rem;
+        }
+
+        .thumb-item:hover {
+            background: #f0f0f0;
+        }
+
+        .thumb-item.active {
+            background: #e8edff;
+            border-color: var(--accent);
+        }
+
+        .thumb-item img {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border: 2px solid var(--border);
+            border-radius: 3px;
+        }
+
+        .thumb-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .thumb-name {
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .thumb-meta {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .thumb-badge {
+            font-size: 0.65rem;
+            background: var(--accent);
+            color: #fff;
+            padding: 0.1rem 0.35rem;
+            border-radius: 3px;
+            font-weight: 700;
+        }
+
+        .thumb-remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #aaa;
+            padding: 0.2rem;
+            line-height: 1;
+        }
+
+        .thumb-remove:hover { color: var(--danger); }
+
+        /* Upload area in sidebar */
+        .upload-trigger {
+            padding: 0.8rem;
+            border-top: 2px solid #eee;
+            flex-shrink: 0;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: var(--radius);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--accent);
+            background: #f0f4ff;
+            color: var(--accent);
+        }
+
+        .upload-area .upload-icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        /* Editor */
+        .editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .editor-toolbar {
+            padding: 0.6rem 1rem;
+            background: var(--card-bg);
+            border-bottom: var(--border-w) solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toolbar-label {
+            font-family: var(--font);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .blur-slider {
+            width: 120px;
+            accent-color: var(--accent);
+        }
+
+        .blur-value {
+            font-family: var(--font);
+            font-size: 0.8rem;
+            min-width: 32px;
+        }
+
+        .toolbar-sep {
+            width: 1px;
+            height: 24px;
+            background: #ddd;
+        }
+
+        /* Canvas area */
+        .canvas-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            background: #e0e0e0;
+            background-image:
+                linear-gradient(45deg, #d5d5d5 25%, transparent 25%),
+                linear-gradient(-45deg, #d5d5d5 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #d5d5d5 75%),
+                linear-gradient(-45deg, transparent 75%, #d5d5d5 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            position: relative;
+        }
+
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+        }
+
+        .canvas-container canvas {
+            display: block;
+        }
+
+        #drawCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+        }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-family: var(--font);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        .empty-state p {
+            font-size: 0.85rem;
+            max-width: 320px;
+        }
+
+        /* Full-page drop overlay */
+        .drop-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(67, 97, 238, 0.15);
+            border: 4px dashed var(--accent);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drop-overlay.visible {
+            display: flex;
+        }
+
+        .drop-overlay span {
+            font-family: var(--font);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: #fff;
+            padding: 1rem 2rem;
+            border: var(--border-w) solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        /* Selection rect preview */
+        .selection-rect {
+            position: absolute;
+            border: 2px dashed var(--accent);
+            background: rgba(67, 97, 238, 0.12);
+            pointer-events: none;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--primary);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 0.85rem;
+            padding: 0.7rem 1.2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 10000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Hidden file input */
+        #fileInput { display: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app {
+                flex-direction: column;
+                height: auto;
+                min-height: calc(100vh - 85px);
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                max-height: 200px;
+                border-right: none;
+                border-bottom: var(--border-w) solid var(--border);
+                flex-direction: row;
+            }
+
+            .sidebar-header {
+                writing-mode: vertical-rl;
+                border-bottom: none;
+                border-right: 2px solid #eee;
+                padding: 0.5rem;
+            }
+
+            .sidebar-header h2 {
+                font-size: 0.8rem;
+            }
+
+            .sidebar-actions {
+                flex-direction: column;
+            }
+
+            .thumb-list {
+                display: flex;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 0.3rem;
+            }
+
+            .thumb-item {
+                flex-direction: column;
+                min-width: 80px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+
+            .upload-trigger {
+                writing-mode: vertical-rl;
+                border-top: none;
+                border-left: 2px solid #eee;
+                padding: 0.5rem;
+                display: flex;
+                align-items: center;
+            }
+
+            .editor {
+                min-height: 60vh;
+            }
+
+            .canvas-wrap {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<input type="file" id="fileInput" accept="image/*" multiple>
+
+<div class="drop-overlay" id="dropOverlay">
+    <span>Drop images here</span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="header">
+    <h1>DRAWBLUR</h1>
+    <p>Upload images, draw rectangles to blur, download.</p>
+</header>
+
+<div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>IMAGES</h2>
+            <div class="sidebar-actions">
+                <button class="btn btn-success btn-sm" id="btnDownloadAll" title="Download all images as ZIP" disabled>ZIP All</button>
+            </div>
+        </div>
+        <div class="thumb-list" id="thumbList">
+            <div class="empty-state" id="sidebarEmpty" style="padding:1rem;">
+                <p style="font-size:0.78rem;">No images yet</p>
+            </div>
+        </div>
+        <div class="upload-trigger">
+            <div class="upload-area" id="uploadArea">
+                <span class="upload-icon">+</span>
+                Add Images
+            </div>
+        </div>
+    </aside>
+
+    <!-- Editor -->
+    <main class="editor">
+        <div class="editor-toolbar" id="editorToolbar" style="display:none;">
+            <div class="toolbar-group">
+                <span class="toolbar-label">Blur:</span>
+                <input type="range" class="blur-slider" id="blurSlider" min="3" max="40" value="15">
+                <span class="blur-value" id="blurValue">15px</span>
+            </div>
+            <div class="toolbar-sep"></div>
+            <div class="toolbar-group">
+                <button class="btn btn-outline btn-sm" id="btnUndo" disabled>Undo</button>
+                <button class="btn btn-danger btn-sm" id="btnClearAll" disabled>Clear All</button>
+            </div>
+            <div class="toolbar-sep"></div>
+            <div class="toolbar-group">
+                <button class="btn btn-primary btn-sm" id="btnDownloadOne">Download</button>
+                <button class="btn btn-outline btn-sm" id="btnRemove">Remove</button>
+            </div>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+            <div class="empty-state" id="editorEmpty">
+                <div class="empty-icon">&#9634;</div>
+                <h3>No image selected</h3>
+                <p>Upload images using the panel on the left or drag and drop anywhere on the page.</p>
+            </div>
+            <div class="canvas-container" id="canvasContainer" style="display:none;">
+                <canvas id="mainCanvas"></canvas>
+                <canvas id="drawCanvas"></canvas>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ── State ──
+    const images = []; // { id, name, origImg, blurRects: [{x,y,w,h,blur}], width, height }
+    let activeId = null;
+    let nextId = 1;
+
+    // ── DOM refs ──
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const dropOverlay = document.getElementById('dropOverlay');
+    const thumbList = document.getElementById('thumbList');
+    const sidebarEmpty = document.getElementById('sidebarEmpty');
+    const editorToolbar = document.getElementById('editorToolbar');
+    const editorEmpty = document.getElementById('editorEmpty');
+    const canvasWrap = document.getElementById('canvasWrap');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const mainCanvas = document.getElementById('mainCanvas');
+    const drawCanvas = document.getElementById('drawCanvas');
+    const mainCtx = mainCanvas.getContext('2d');
+    const drawCtx = drawCanvas.getContext('2d');
+    const blurSlider = document.getElementById('blurSlider');
+    const blurValue = document.getElementById('blurValue');
+    const btnUndo = document.getElementById('btnUndo');
+    const btnClearAll = document.getElementById('btnClearAll');
+    const btnDownloadOne = document.getElementById('btnDownloadOne');
+    const btnDownloadAll = document.getElementById('btnDownloadAll');
+    const btnRemove = document.getElementById('btnRemove');
+    const toastEl = document.getElementById('toast');
+
+    // ── Upload handling ──
+    uploadArea.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = '';
+    });
+
+    // Drag & drop on upload area
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    // Full-page drag & drop
+    let dragCounter = 0;
+    document.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragCounter++;
+        dropOverlay.classList.add('visible');
+    });
+    document.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter <= 0) {
+            dragCounter = 0;
+            dropOverlay.classList.remove('visible');
+        }
+    });
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        dropOverlay.classList.remove('visible');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    function handleFiles(fileList) {
+        const validFiles = [...fileList].filter(f => f.type.startsWith('image/'));
+        if (validFiles.length === 0) return;
+
+        let loaded = 0;
+        validFiles.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const entry = {
+                        id: nextId++,
+                        name: file.name,
+                        origImg: img,
+                        blurRects: [],
+                        width: img.naturalWidth,
+                        height: img.naturalHeight
+                    };
+                    images.push(entry);
+                    loaded++;
+                    if (loaded === validFiles.length) {
+                        refreshThumbs();
+                        if (activeId === null) selectImage(entry.id);
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // ── Thumbnail list ──
+    function refreshThumbs() {
+        sidebarEmpty.style.display = images.length === 0 ? '' : 'none';
+        btnDownloadAll.disabled = images.length === 0;
+
+        // Build list
+        const existing = thumbList.querySelectorAll('.thumb-item');
+        existing.forEach(el => el.remove());
+
+        images.forEach(entry => {
+            const el = document.createElement('div');
+            el.className = 'thumb-item' + (entry.id === activeId ? ' active' : '');
+            el.dataset.id = entry.id;
+
+            const img = document.createElement('img');
+            img.src = entry.origImg.src;
+            el.appendChild(img);
+
+            const info = document.createElement('div');
+            info.className = 'thumb-info';
+            const nameEl = document.createElement('div');
+            nameEl.className = 'thumb-name';
+            nameEl.textContent = entry.name;
+            info.appendChild(nameEl);
+
+            const meta = document.createElement('div');
+            meta.className = 'thumb-meta';
+            meta.textContent = entry.width + ' x ' + entry.height;
+            if (entry.blurRects.length > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'thumb-badge';
+                badge.textContent = entry.blurRects.length + ' blur' + (entry.blurRects.length > 1 ? 's' : '');
+                badge.style.marginLeft = '0.4rem';
+                meta.appendChild(badge);
+            }
+            info.appendChild(meta);
+            el.appendChild(info);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'thumb-remove';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.title = 'Remove image';
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeImage(entry.id);
+            });
+            el.appendChild(removeBtn);
+
+            el.addEventListener('click', () => selectImage(entry.id));
+            thumbList.appendChild(el);
+        });
+    }
+
+    function selectImage(id) {
+        activeId = id;
+        const entry = images.find(e => e.id === id);
+        if (!entry) return;
+
+        editorToolbar.style.display = '';
+        editorEmpty.style.display = 'none';
+        canvasContainer.style.display = '';
+
+        // Fit canvas to available space
+        const wrapRect = canvasWrap.getBoundingClientRect();
+        const pad = 40;
+        const maxW = wrapRect.width - pad * 2;
+        const maxH = wrapRect.height - pad * 2;
+        let scale = Math.min(1, maxW / entry.width, maxH / entry.height);
+        const dispW = Math.round(entry.width * scale);
+        const dispH = Math.round(entry.height * scale);
+
+        mainCanvas.width = dispW;
+        mainCanvas.height = dispH;
+        drawCanvas.width = dispW;
+        drawCanvas.height = dispH;
+        canvasContainer.style.width = dispW + 'px';
+        canvasContainer.style.height = dispH + 'px';
+
+        renderImage(entry);
+        updateToolbarState();
+        refreshThumbs();
+    }
+
+    function removeImage(id) {
+        const idx = images.findIndex(e => e.id === id);
+        if (idx === -1) return;
+        images.splice(idx, 1);
+
+        if (activeId === id) {
+            if (images.length > 0) {
+                const newIdx = Math.min(idx, images.length - 1);
+                selectImage(images[newIdx].id);
+            } else {
+                activeId = null;
+                editorToolbar.style.display = 'none';
+                editorEmpty.style.display = '';
+                canvasContainer.style.display = 'none';
+            }
+        }
+        refreshThumbs();
+    }
+
+    // ── Rendering ──
+    function renderImage(entry) {
+        const w = mainCanvas.width;
+        const h = mainCanvas.height;
+        const scaleX = w / entry.width;
+        const scaleY = h / entry.height;
+
+        // Draw original
+        mainCtx.clearRect(0, 0, w, h);
+        mainCtx.drawImage(entry.origImg, 0, 0, w, h);
+
+        // Apply blur rects
+        entry.blurRects.forEach(rect => {
+            applyBlurRect(mainCtx, w, h, entry, rect, scaleX, scaleY);
+        });
+
+        // Clear draw overlay
+        drawCtx.clearRect(0, 0, w, h);
+    }
+
+    function applyBlurRect(ctx, canvasW, canvasH, entry, rect, scaleX, scaleY) {
+        // Rect in display coords
+        const dx = Math.round(rect.x * scaleX);
+        const dy = Math.round(rect.y * scaleY);
+        const dw = Math.round(rect.w * scaleX);
+        const dh = Math.round(rect.h * scaleY);
+
+        if (dw <= 0 || dh <= 0) return;
+
+        const blur = rect.blur;
+        const pad = blur * 2;
+
+        // Clamp region with padding
+        const sx = Math.max(0, dx - pad);
+        const sy = Math.max(0, dy - pad);
+        const sx2 = Math.min(canvasW, dx + dw + pad);
+        const sy2 = Math.min(canvasH, dy + dh + pad);
+        const sw = sx2 - sx;
+        const sh = sy2 - sy;
+
+        if (sw <= 0 || sh <= 0) return;
+
+        // Get the padded region from current canvas
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = sw;
+        tempCanvas.height = sh;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Draw current state of that region
+        tempCtx.drawImage(ctx.canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+        // Apply blur
+        const blurCanvas = document.createElement('canvas');
+        blurCanvas.width = sw;
+        blurCanvas.height = sh;
+        const blurCtx = blurCanvas.getContext('2d');
+        blurCtx.filter = 'blur(' + blur + 'px)';
+        blurCtx.drawImage(tempCanvas, 0, 0);
+
+        // Paste only the inner (non-padded) region back
+        const innerX = dx - sx;
+        const innerY = dy - sy;
+        ctx.drawImage(blurCanvas, innerX, innerY, dw, dh, dx, dy, dw, dh);
+    }
+
+    function renderAtFullRes(entry) {
+        const c = document.createElement('canvas');
+        c.width = entry.width;
+        c.height = entry.height;
+        const ctx = c.getContext('2d');
+
+        ctx.drawImage(entry.origImg, 0, 0);
+
+        entry.blurRects.forEach(rect => {
+            applyBlurRect(ctx, entry.width, entry.height, entry, rect, 1, 1);
+        });
+
+        return c;
+    }
+
+    // ── Drawing interaction ──
+    let isDrawing = false;
+    let drawStart = { x: 0, y: 0 };
+    let currentRect = null;
+
+    drawCanvas.addEventListener('mousedown', onDrawStart);
+    drawCanvas.addEventListener('mousemove', onDrawMove);
+    drawCanvas.addEventListener('mouseup', onDrawEnd);
+    drawCanvas.addEventListener('mouseleave', onDrawEnd);
+
+    // Touch support
+    drawCanvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const t = e.touches[0];
+        onDrawStart(touchToMouse(t));
+    }, { passive: false });
+    drawCanvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const t = e.touches[0];
+        onDrawMove(touchToMouse(t));
+    }, { passive: false });
+    drawCanvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        onDrawEnd();
+    }, { passive: false });
+
+    function touchToMouse(touch) {
+        const rect = drawCanvas.getBoundingClientRect();
+        return {
+            offsetX: touch.clientX - rect.left,
+            offsetY: touch.clientY - rect.top
+        };
+    }
+
+    function onDrawStart(e) {
+        if (activeId === null) return;
+        isDrawing = true;
+        drawStart.x = e.offsetX;
+        drawStart.y = e.offsetY;
+        currentRect = null;
+    }
+
+    function onDrawMove(e) {
+        if (!isDrawing) return;
+        const x = Math.min(drawStart.x, e.offsetX);
+        const y = Math.min(drawStart.y, e.offsetY);
+        const w = Math.abs(e.offsetX - drawStart.x);
+        const h = Math.abs(e.offsetY - drawStart.y);
+
+        currentRect = { x, y, w, h };
+
+        // Draw selection preview
+        drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        drawCtx.strokeStyle = 'rgba(67, 97, 238, 0.8)';
+        drawCtx.lineWidth = 2;
+        drawCtx.setLineDash([6, 3]);
+        drawCtx.fillStyle = 'rgba(67, 97, 238, 0.1)';
+        drawCtx.fillRect(x, y, w, h);
+        drawCtx.strokeRect(x, y, w, h);
+        drawCtx.setLineDash([]);
+    }
+
+    function onDrawEnd() {
+        if (!isDrawing) return;
+        isDrawing = false;
+
+        if (!currentRect || currentRect.w < 4 || currentRect.h < 4) {
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            currentRect = null;
+            return;
+        }
+
+        const entry = images.find(e => e.id === activeId);
+        if (!entry) return;
+
+        const scaleX = entry.width / mainCanvas.width;
+        const scaleY = entry.height / mainCanvas.height;
+
+        // Store rect in original image coordinates
+        const blurRect = {
+            x: Math.round(currentRect.x * scaleX),
+            y: Math.round(currentRect.y * scaleY),
+            w: Math.round(currentRect.w * scaleX),
+            h: Math.round(currentRect.h * scaleY),
+            blur: parseInt(blurSlider.value)
+        };
+
+        entry.blurRects.push(blurRect);
+        renderImage(entry);
+        updateToolbarState();
+        refreshThumbs();
+        currentRect = null;
+    }
+
+    // ── Toolbar ──
+    blurSlider.addEventListener('input', () => {
+        blurValue.textContent = blurSlider.value + 'px';
+    });
+
+    btnUndo.addEventListener('click', () => {
+        const entry = images.find(e => e.id === activeId);
+        if (!entry || entry.blurRects.length === 0) return;
+        entry.blurRects.pop();
+        renderImage(entry);
+        updateToolbarState();
+        refreshThumbs();
+    });
+
+    btnClearAll.addEventListener('click', () => {
+        const entry = images.find(e => e.id === activeId);
+        if (!entry || entry.blurRects.length === 0) return;
+        entry.blurRects = [];
+        renderImage(entry);
+        updateToolbarState();
+        refreshThumbs();
+    });
+
+    function updateToolbarState() {
+        const entry = images.find(e => e.id === activeId);
+        const hasRects = entry && entry.blurRects.length > 0;
+        btnUndo.disabled = !hasRects;
+        btnClearAll.disabled = !hasRects;
+    }
+
+    // ── Download single ──
+    btnDownloadOne.addEventListener('click', () => {
+        const entry = images.find(e => e.id === activeId);
+        if (!entry) return;
+        const c = renderAtFullRes(entry);
+        downloadCanvas(c, 'blurred_' + entry.name);
+        toast('Downloaded: ' + entry.name);
+    });
+
+    function downloadCanvas(canvas, filename) {
+        // Determine format from filename
+        const ext = filename.split('.').pop().toLowerCase();
+        const mime = (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' : 'image/png';
+        // Ensure extension is correct
+        if (mime === 'image/png' && ext !== 'png') {
+            filename = filename.replace(/\.[^.]+$/, '.png');
+        }
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, mime, 0.95);
+    }
+
+    // ── Remove from editor ──
+    btnRemove.addEventListener('click', () => {
+        if (activeId !== null) removeImage(activeId);
+    });
+
+    // ── Download all as ZIP ──
+    btnDownloadAll.addEventListener('click', async () => {
+        if (images.length === 0) return;
+        btnDownloadAll.disabled = true;
+        btnDownloadAll.textContent = 'Zipping...';
+
+        try {
+            const files = [];
+            for (const entry of images) {
+                const c = renderAtFullRes(entry);
+                const ext = entry.name.split('.').pop().toLowerCase();
+                const mime = (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' : 'image/png';
+                let fname = 'blurred_' + entry.name;
+                if (mime === 'image/png' && ext !== 'png') {
+                    fname = fname.replace(/\.[^.]+$/, '.png');
+                }
+                const blob = await new Promise(resolve => c.toBlob(resolve, mime, 0.95));
+                const arr = new Uint8Array(await blob.arrayBuffer());
+                files.push({ name: fname, data: arr });
+            }
+
+            const zipBlob = buildZip(files);
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'blurred_images.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast('Downloaded ZIP with ' + images.length + ' image(s)');
+        } catch (err) {
+            toast('Error creating ZIP: ' + err.message);
+            console.error(err);
+        }
+
+        btnDownloadAll.disabled = false;
+        btnDownloadAll.textContent = 'ZIP All';
+    });
+
+    // ── Minimal ZIP builder (store-only, no compression) ──
+    function buildZip(files) {
+        const centralHeaders = [];
+        const localChunks = [];
+        let offset = 0;
+
+        for (const file of files) {
+            const nameBytes = new TextEncoder().encode(file.name);
+            const crc = crc32(file.data);
+            const size = file.data.length;
+
+            // Local file header
+            const local = new Uint8Array(30 + nameBytes.length);
+            const lv = new DataView(local.buffer);
+            lv.setUint32(0, 0x04034b50, true); // signature
+            lv.setUint16(4, 20, true);          // version needed
+            lv.setUint16(6, 0, true);           // flags
+            lv.setUint16(8, 0, true);           // compression: store
+            lv.setUint16(10, 0, true);          // mod time
+            lv.setUint16(12, 0, true);          // mod date
+            lv.setUint32(14, crc, true);        // crc32
+            lv.setUint32(18, size, true);       // compressed size
+            lv.setUint32(22, size, true);       // uncompressed size
+            lv.setUint16(26, nameBytes.length, true); // name length
+            lv.setUint16(28, 0, true);          // extra length
+            local.set(nameBytes, 30);
+
+            localChunks.push(local);
+            localChunks.push(file.data);
+
+            // Central directory header
+            const central = new Uint8Array(46 + nameBytes.length);
+            const cv = new DataView(central.buffer);
+            cv.setUint32(0, 0x02014b50, true);  // signature
+            cv.setUint16(4, 20, true);           // version made by
+            cv.setUint16(6, 20, true);           // version needed
+            cv.setUint16(8, 0, true);            // flags
+            cv.setUint16(10, 0, true);           // compression
+            cv.setUint16(12, 0, true);           // mod time
+            cv.setUint16(14, 0, true);           // mod date
+            cv.setUint32(16, crc, true);         // crc32
+            cv.setUint32(20, size, true);        // compressed
+            cv.setUint32(24, size, true);        // uncompressed
+            cv.setUint16(28, nameBytes.length, true);
+            cv.setUint16(30, 0, true);           // extra length
+            cv.setUint16(32, 0, true);           // comment length
+            cv.setUint16(34, 0, true);           // disk number
+            cv.setUint16(36, 0, true);           // internal attrs
+            cv.setUint32(38, 0, true);           // external attrs
+            cv.setUint32(42, offset, true);      // offset of local header
+            central.set(nameBytes, 46);
+
+            centralHeaders.push(central);
+            offset += local.length + file.data.length;
+        }
+
+        const centralDirOffset = offset;
+        let centralDirSize = 0;
+        centralHeaders.forEach(h => centralDirSize += h.length);
+
+        // End of central directory
+        const eocd = new Uint8Array(22);
+        const ev = new DataView(eocd.buffer);
+        ev.setUint32(0, 0x06054b50, true);
+        ev.setUint16(4, 0, true);
+        ev.setUint16(6, 0, true);
+        ev.setUint16(8, files.length, true);
+        ev.setUint16(10, files.length, true);
+        ev.setUint32(12, centralDirSize, true);
+        ev.setUint32(16, centralDirOffset, true);
+        ev.setUint16(20, 0, true);
+
+        const all = [...localChunks, ...centralHeaders, eocd];
+        const totalSize = all.reduce((s, a) => s + a.length, 0);
+        const result = new Uint8Array(totalSize);
+        let pos = 0;
+        for (const chunk of all) {
+            result.set(chunk, pos);
+            pos += chunk.length;
+        }
+
+        return new Blob([result], { type: 'application/zip' });
+    }
+
+    // CRC32 lookup table
+    const crcTable = (() => {
+        const table = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+            let c = i;
+            for (let j = 0; j < 8; j++) {
+                c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            }
+            table[i] = c;
+        }
+        return table;
+    })();
+
+    function crc32(data) {
+        let crc = 0xFFFFFFFF;
+        for (let i = 0; i < data.length; i++) {
+            crc = crcTable[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+        }
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    // ── Toast notification ──
+    let toastTimer;
+    function toast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
+    }
+
+    // ── Resize handling ──
+    window.addEventListener('resize', () => {
+        if (activeId !== null) selectImage(activeId);
+    });
+
+    // ── Keyboard shortcuts ──
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key === 'z') {
+                e.preventDefault();
+                btnUndo.click();
+            }
+        }
+    });
+})();
+</script>
+</body>
+</html>
